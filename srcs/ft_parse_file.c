@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/25 20:57:51 by sclolus           #+#    #+#             */
-/*   Updated: 2017/07/03 04:45:13 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/07/26 21:27:03 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,6 @@ static t_vec		*ft_get_data_from_line(char *line, t_mem_block *data)
 	int64_t			z;
 	uint64_t		i;
 
-
 	i = 0;
 	x = 0;
 	while (line[i])
@@ -28,16 +27,14 @@ static t_vec		*ft_get_data_from_line(char *line, t_mem_block *data)
 		while (line[i] && !ft_isdigit(line[i]))
 			i++;
 		if (!line[i])
-			break;
+			break ;
 		z = ft_atoi(line + i);
-		min_max[0].z = (z > min_max[0].z ? z : min_max[0].z);
-		min_max[0].y = (y > min_max[0].z ? y : min_max[0].y);
-		min_max[0].x = (x > min_max[0].x ? x : min_max[0].x);
-		min_max[1].z = (z < min_max[1].z ? z : min_max[1].z);
-		min_max[1].y = (y < min_max[1].z ? y : min_max[1].y);
-		min_max[1].x = (x < min_max[1].x ? x : min_max[1].x);
+		min_max[0] = (t_vec){x > min_max[0].x ? x : min_max[0].x
+	, y > min_max[0].z ? y : min_max[0].y, z > min_max[0].z ? z : min_max[0].z};
+		min_max[1] = (t_vec){x < min_max[1].x ? x : min_max[1].x
+	, y < min_max[1].z ? y : min_max[1].y, z < min_max[1].z ? z : min_max[1].z};
 		ft_mem_block_push_back_elem(data
-		, &(t_point){{(double)(x), (double)(y), (double)(-z)}, 0}, sizeof(t_point));
+	, &(t_point){{(double)(x), (double)(y), (double)(-z)}, 0}, sizeof(t_point));
 		while (ft_isdigit(line[i]))
 			i++;
 		x++;
@@ -59,7 +56,7 @@ static void		ft_adjust_points(t_mem_block *data, t_vec *min_max
 	while ((i) * sizeof(t_point) < data->offset)
 	{
 		((t_point*)data->block + i)->color = ft_get_lerp(min_max[0].z
-	 , min_max[1].z, -((t_point*)data->block + i)->coords.z, color_set);
+	, min_max[1].z, -((t_point*)data->block + i)->coords.z, color_set);
 		((t_point*)data->block + i)->coords.z -= half_max.z;
 		((t_point*)data->block + i)->coords.x -= half_max.x;
 		((t_point*)data->block + i)->coords.y -= half_max.y;
@@ -73,7 +70,7 @@ static void		ft_adjust_points(t_mem_block *data, t_vec *min_max
 	}
 }
 
-t_mem_block			*ft_parse_file(char *filename, char *filename_color)
+t_mem_block		*ft_parse_file(char *filename, char *filename_color)
 {
 	t_color_set			color_set;
 	t_mem_block			*data;

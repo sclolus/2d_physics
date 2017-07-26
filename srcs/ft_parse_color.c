@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/07/03 04:10:29 by sclolus           #+#    #+#             */
-/*   Updated: 2017/07/03 04:42:14 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/07/26 21:29:18 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,12 +40,11 @@ static t_color_set		ft_get_color_set(char *buf)
 		while (buf[i] && !ft_strchr(HEXA_CHARSET, buf[i]))
 		{
 			if (!ft_strchr(" ,", buf[i]))
-				ft_error_exit(1, (char*[]){ERR_INVALID_CHAR_COLOR_FILE}
-					, EXIT_FAILURE);
+				ft_error_exit(1, (char*[]){ERR_INVALID_CHAR_COLOR_FILE}, 1);
 			i++;
 		}
 		if (!buf[i])
-			break;
+			break ;
 		if (nbr_color_parsed)
 			color_set.color_max = ft_atoi_base(buf + i, HEXA_CHARSET);
 		else
@@ -84,4 +83,3 @@ t_color_set				ft_parse_color(char *filename_color)
 					, filename_color, " file"}, EXIT_FAILURE);
 	return (color_set);
 }
-

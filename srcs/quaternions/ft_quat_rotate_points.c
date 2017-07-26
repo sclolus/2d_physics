@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/27 09:21:26 by sclolus           #+#    #+#             */
-/*   Updated: 2017/06/29 10:45:47 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/07/26 21:15:01 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,10 +21,8 @@ void	ft_quat_rotate_points(t_vec *axis, double angle, t_mem_block *data)
 	uint64_t	i;
 
 	i = 0;
-	rotation_quat.x = axis->x * sin(angle / 2);
-	rotation_quat.y = axis->y * sin(angle / 2);
-	rotation_quat.z = axis->z * sin(angle / 2);
-	rotation_quat.w = cos(angle / 2);
+	rotation_quat = (t_quat){axis->x * sin(angle / 2), axis->y * sin(angle / 2)
+						, axis->z * sin(angle / 2), cos(angle / 2)};
 	rotation_quat_prime = ft_get_conjugate_quat(&rotation_quat);
 	while ((i) * sizeof(t_line) < data->offset)
 	{

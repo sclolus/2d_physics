@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/28 18:43:15 by sclolus           #+#    #+#             */
-/*   Updated: 2017/06/28 21:34:25 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/07/26 21:16:41 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,11 +18,13 @@ t_image_frame	*ft_get_image_frames(MLX_PTR connector, uint32_t nbr_frames)
 	uint32_t			i;
 
 	i = 0;
-	if (!(frames = (t_image_frame*)ft_memalloc(sizeof(t_image_frame) * nbr_frames)))
+	if (!(frames = (t_image_frame*)ft_memalloc(sizeof(t_image_frame)
+							* nbr_frames)))
 		ft_error_exit(1, (char*[]){MLX_IMG_FRAMES_ERROR}, EXIT_FAILURE);
 	while (i < nbr_frames)
 	{
-		if (!(frames[i].frame = mlx_new_image(connector, WINDOW_WIDTH, WINDOW_HEIGHT)))
+		if (!(frames[i].frame = mlx_new_image(connector, WINDOW_WIDTH
+											, WINDOW_HEIGHT)))
 			ft_error_exit(1, (char*[]){MLX_NEW_IMG_ERROR}, EXIT_FAILURE);
 		frames[i].buffer = mlx_get_data_addr(frames[i].frame
 						, &frames[i].bits_per_pixel, &frames[i].size_line
