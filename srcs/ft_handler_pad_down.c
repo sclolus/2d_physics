@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/27 06:51:08 by sclolus           #+#    #+#             */
-/*   Updated: 2017/06/29 06:35:44 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/07/26 21:05:43 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,14 +29,10 @@ void	ft_handler_pad_down(void *param)
 		((t_line*)tmp->block + i)->end.x *= DEZOOM_RATIO;
 		((t_line*)tmp->block + i)->end.z *= DEZOOM_RATIO;
 		((t_line*)tmp->block + i)->end.y *= DEZOOM_RATIO;
-		/* ((t_line*)tmp->block + i)->dx = ((t_line*)tmp->block + i)->start.x - ((t_line*)tmp->block + i)->end.x; */
-		/* ((t_line*)tmp->block + i)->dy = ((t_line*)tmp->block + i)->start.y - ((t_line*)tmp->block + i)->end.y; */
-		/* ((t_line*)tmp->block + i)->e = ((t_line*)tmp->block + i)->dy / ((t_line*)tmp->block + i)->dx; */
-
 		i++;
 		if (i * sizeof(t_line) >= tmp->offset && tmp->next && !(i = 0))
 			tmp = tmp->next;
 	}
 	ft_draw_lines(((MLX_PTR)((char**)param)[0]), (MLX_PTR)((char**)param)[1]
-		, (MLX_IMG)((char**)param)[2],(t_mem_block*)((t_mem_block**)param)[3]);
+		, (MLX_IMG)((char**)param)[2], (t_mem_block*)((t_mem_block**)param)[3]);
 }

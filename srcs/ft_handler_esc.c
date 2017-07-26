@@ -6,13 +6,13 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/26 21:16:55 by sclolus           #+#    #+#             */
-/*   Updated: 2017/06/26 21:20:54 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/07/26 21:08:22 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "fdf.h"
 
-void	ft_handler_esc(void *param __attribute__((unused)))
+void	ft_handler_esc(void __attribute__((unused)) *param)
 {
 	exit(EXIT_SUCCESS);
 }
