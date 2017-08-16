@@ -12,7 +12,6 @@ SRC= srcs/main.c \
 	srcs/ft_pthread_create_lines_drawing_threads.c \
 	srcs/ft_pthread_wait_drawing_threads.c \
 	srcs/ft_pthread_lines_drawing_routine.c \
-	srcs/ft_line_clipping.c \
 	srcs/ft_set_3d.c \
 	srcs/ft_set_lines.c \
 	srcs/ft_handler_keys.c \

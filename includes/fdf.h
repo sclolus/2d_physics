@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/25 16:55:51 by sclolus           #+#    #+#             */
-/*   Updated: 2017/07/03 04:24:01 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/08/16 23:06:22 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -193,7 +193,6 @@ void			ft_draw_line(t_mlx_data *mlx_data, t_line *line);
 void			ft_draw_lines(MLX_PTR connector, MLX_WIN win, t_image_frame *frames
 						, t_mem_block *data);
 int				ft_draw_lines_hook(void *param);
-t_line			*ft_line_clipping(t_line *line);
 
 /*
 ** Pthread drawing
