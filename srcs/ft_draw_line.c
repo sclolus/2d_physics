@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/25 23:22:11 by sclolus           #+#    #+#             */
-/*   Updated: 2017/07/01 18:34:30 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/08/17 00:29:12 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,14 +14,12 @@
 
 static void	ft_case_1(t_mlx_data *mlx_data, t_line *line)
 {
-	int					*image_rgb;
 	double				e;
 	double				derror;
 	double				x;
 	double				y;
 	double				error;
 
-	image_rgb = (int*)mlx_data->frame->buffer;
 	e = (line->dy / line->dx);
 	derror = ABS(e);
 	error = derror - 0.5;
@@ -29,7 +27,9 @@ static void	ft_case_1(t_mlx_data *mlx_data, t_line *line)
 	y = line->start.y;
 	while (x < line->end.x)
 	{
-		((int*)image_rgb)[(int)(y + WINDOW_HEIGHT / 2) * WINDOW_WIDTH + (int)(x) + WINDOW_WIDTH / 2] = ft_get_color_interpolation(line, &(t_vec){x, y, 0});
+		((int*)mlx_data->frame->buffer)[(int)(y + WINDOW_HEIGHT / 2)
+		* WINDOW_WIDTH + (int)(x) + WINDOW_WIDTH
+		/ 2] = ft_get_color_interpolation(line, &(t_vec){x, y, 0});
 		error += derror;
 		if (error >= 0.5)
 		{
@@ -42,14 +42,12 @@ static void	ft_case_1(t_mlx_data *mlx_data, t_line *line)
 
 static void	ft_case_2(t_mlx_data *mlx_data, t_line *line)
 {
-	int					*image_rgb;
 	double				e;
 	double				derror;
 	double				x;
 	double				y;
 	double				error;
 
-	image_rgb = (int*)mlx_data->frame->buffer;
 	e = (line->dy / line->dx);
 	derror = ABS(e);
 	error = derror - 0.5;
@@ -57,7 +55,9 @@ static void	ft_case_2(t_mlx_data *mlx_data, t_line *line)
 	y = line->start.y;
 	while (x < line->end.x)
 	{
-		((int*)image_rgb)[(int)(y + WINDOW_HEIGHT / 2) * WINDOW_WIDTH + (int)x + WINDOW_WIDTH / 2] = ft_get_color_interpolation(line, &(t_vec){x, y, 0});
+		((int*)mlx_data->frame->buffer)[(int)(y + WINDOW_HEIGHT / 2)
+	* WINDOW_WIDTH + (int)x + WINDOW_WIDTH
+	/ 2] = ft_get_color_interpolation(line, &(t_vec){x, y, 0});
 		error += derror;
 		if (error >= 0.5)
 		{
@@ -70,14 +70,12 @@ static void	ft_case_2(t_mlx_data *mlx_data, t_line *line)
 
 static void	ft_case_3(t_mlx_data *mlx_data, t_line *line)
 {
-	int					*image_rgb;
 	double				e;
 	double				derror;
 	double				x;
 	double				y;
 	double				error;
 
-	image_rgb = (int*)mlx_data->frame->buffer;
 	e = (line->dx / line->dy);
 	derror = ABS(e);
 	error = derror - 0.5;
@@ -85,7 +83,9 @@ static void	ft_case_3(t_mlx_data *mlx_data, t_line *line)
 	y = line->start.y;
 	while (y < line->end.y)
 	{
-		((int*)image_rgb)[(int)(y + WINDOW_HEIGHT / 2) * WINDOW_WIDTH + (int)x + WINDOW_WIDTH / 2] = ft_get_color_interpolation(line, &(t_vec){x, y, 0});
+		((int*)mlx_data->frame->buffer)[(int)(y + WINDOW_HEIGHT / 2)
+	* WINDOW_WIDTH + (int)x + WINDOW_WIDTH
+	/ 2] = ft_get_color_interpolation(line, &(t_vec){x, y, 0});
 		error += derror;
 		if (error >= 0.5)
 		{
@@ -98,14 +98,12 @@ static void	ft_case_3(t_mlx_data *mlx_data, t_line *line)
 
 static void	ft_case_4(t_mlx_data *mlx_data, t_line *line)
 {
-	int					*image_rgb;
 	double				e;
 	double				derror;
 	double				x;
 	double				y;
 	double				error;
 
-	image_rgb = (int*)mlx_data->frame->buffer;
 	e = (line->dx / line->dy);
 	derror = ABS(e);
 	error = derror - 0.5;
@@ -113,7 +111,9 @@ static void	ft_case_4(t_mlx_data *mlx_data, t_line *line)
 	y = line->start.y;
 	while (y > line->end.y)
 	{
-		((int*)image_rgb)[(int)(y + WINDOW_HEIGHT / 2) * WINDOW_WIDTH + (int)x + WINDOW_WIDTH / 2] = ft_get_color_interpolation(line, &(t_vec){x, y, 0});
+		((int*)mlx_data->frame->buffer)[(int)(y + WINDOW_HEIGHT / 2)
+	* WINDOW_WIDTH + (int)x + WINDOW_WIDTH
+	/ 2] = ft_get_color_interpolation(line, &(t_vec){x, y, 0});
 		error += derror;
 		if (error >= 0.5)
 		{
@@ -124,24 +124,12 @@ static void	ft_case_4(t_mlx_data *mlx_data, t_line *line)
 	}
 }
 
-static void	ft_swap_t_point_in_line(t_line *line)
-{
-	t_vec	tmp;
-
-	tmp = line->start;
-	line->start = line->end;
-	line->end = tmp;
-	line->dx *= 1;
-	line->dy *= 1;
-}
-void	ft_draw_line(t_mlx_data *mlx_data, t_line *line)
+void		ft_draw_line(t_mlx_data *mlx_data, t_line *line)
 {
 	t_line	tmp;
 
 	tmp = *line;
-	if (tmp.start.x + (WINDOW_WIDTH / 2) + 1 >= WINDOW_WIDTH || tmp.start.y + (WINDOW_HEIGHT / 2) + 1 >=  WINDOW_HEIGHT
-		|| tmp.start.x + (WINDOW_WIDTH / 2) < 0 || tmp.start.y + (WINDOW_HEIGHT / 2) < 0 || tmp.end.x + (WINDOW_WIDTH / 2) + 1>= WINDOW_WIDTH || tmp.end.y + (WINDOW_HEIGHT / 2) + 1 >=  WINDOW_HEIGHT
-		|| tmp.end.x + (WINDOW_WIDTH / 2) < 0 || tmp.end.y + (WINDOW_HEIGHT / 2) < 0)
+	if (ft_line_clipping(line))
 		return ;
 	if (tmp.start.x > tmp.end.x)
 		ft_swap_t_point_in_line(&tmp);

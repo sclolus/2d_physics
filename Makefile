@@ -9,6 +9,8 @@ SRC= srcs/main.c \
 	srcs/ft_claim_frame.c \
 	srcs/ft_draw_line.c \
 	srcs/ft_draw_lines.c \
+	srcs/ft_line_clipping.c \
+	srcs/ft_swap_t_point_in_line.c \
 	srcs/ft_pthread_create_lines_drawing_threads.c \
 	srcs/ft_pthread_wait_drawing_threads.c \
 	srcs/ft_pthread_lines_drawing_routine.c \
@@ -44,7 +46,7 @@ HDRS= includes/fdf.h
 OBJ= $(SRC:.c=.o)
 HDR_PATH= ./libft/includes/
 CC= gcc
-CC_FLAGS= -v -Ofast -Wall -Werror -Wextra  -g3 -fsanitize=address -fsanitize-blacklist=my_ignores.txt
+CC_FLAGS= -v -Ofast -Wall -Werror -Wextra #  -g3 -fsanitize=address -fsanitize-blacklist=my_ignores.txt
 MLX_PATH=./minilibx_macos/
 LIBFT_PATH=./libft/
 FLAGS= -L$(MLX_PATH) -lmlx -L$(LIBFT_PATH) -lft -I$(HDR_PATH) -I./includes -I$(MLX_PATH) -framework OpenGL -framework AppKit
