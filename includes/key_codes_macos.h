@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/26 18:38:08 by sclolus           #+#    #+#             */
-/*   Updated: 2017/06/26 18:38:09 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/08/17 00:45:51 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -131,16 +131,16 @@
 # define KEY_PAD_ENTER      76
 # define KEY_PAD_DOT        65
 
-# define Button1Mask        (1<<8)
-# define Button2Mask        (1<<9)
-# define Button3Mask        (1<<10)
-# define Button4Mask        (1<<11)
-# define Button5Mask        (1<<12)
-# define AnyModifier        (1<<15)
-# define Button1            1
-# define Button2            2
-# define Button3            3
-# define Button4            4
-# define Button5            5
+# define BUTTON1MASK        (1<<8)
+# define BUTTON2MASK        (1<<9)
+# define BUTTON3MASK        (1<<10)
+# define BUTTON4MASK        (1<<11)
+# define BUTTON5MASK        (1<<12)
+# define ANYMODIFIER        (1<<15)
+# define BUTTON1            1
+# define BUTTON2            2
+# define BUTTON3            3
+# define BUTTON4            4
+# define BUTTON5            5
 
 #endif

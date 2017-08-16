@@ -1,4 +1,3 @@
-
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
@@ -7,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/25 16:55:51 by sclolus           #+#    #+#             */
-/*   Updated: 2017/08/17 00:27:18 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/08/17 00:43:10 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,8 +55,14 @@ typedef void* MLX_PTR;
 
 # define ABS(x) (x < 0 ? -x : x)
 
-typedef struct	s_vec t_vec;
-typedef struct	s_color_set t_color_set;
+//typedef struct	s_vec t_vec;
+//typedef struct	s_color_set t_color_set;
+
+typedef struct	s_color_set
+{
+	int	color_min;
+	int	color_max;
+}				t_color_set;
 
 typedef struct	s_mem_block
 {
@@ -251,12 +256,6 @@ void			ft_quat_rotate_points(t_vec *axis, double angle, t_mem_block *data);
 
 # define COLOR_MIN_Z 0xF00000
 # define COLOR_MAX_Z 0xFFFFFF
-
-typedef struct	s_color_set
-{
-	int	color_min;
-	int	color_max;
-}				t_color_set;
 
 int32_t			ft_get_color_interpolation(t_line *line, t_vec *point);
 double			ft_get_z_coord(t_line *line, t_vec *point);
