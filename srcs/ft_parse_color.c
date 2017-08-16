@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/07/03 04:10:29 by sclolus           #+#    #+#             */
-/*   Updated: 2017/08/16 22:56:02 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/08/16 23:32:12 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,15 +27,21 @@ static uint32_t			ft_atoi_base(char *str, char *base)
 	return ((uint32_t)nbr);
 }
 
+static void				ft_check_color_nbr(uint32_t *nbr_color)
+{
+	if (*nbr_color != 2)
+		ft_error_exit(1, (char*[]){ERR_COLOR_NBR}, EXIT_FAILURE);
+}
+
 static t_color_set		ft_get_color_set(char *buf)
 {
 	t_color_set			color_set;
-	uint32_t			nbr_color_parsed;
+	uint32_t			nbr_color __attribute__((cleanup(ft_check_color_nbr)));
 	uint32_t			i;
 
-	nbr_color_parsed = 0;
+	nbr_color = 0;
 	i = 0;
-	while (buf[i] && nbr_color_parsed < 2)
+	while (buf[i] && nbr_color < 2)
 	{
 		while (buf[i] && !ft_strchr(HEXA_CHARSET, buf[i]))
 		{
@@ -45,16 +51,14 @@ static t_color_set		ft_get_color_set(char *buf)
 		}
 		if (!buf[i])
 			break ;
-		if (nbr_color_parsed)
+		if (nbr_color)
 			color_set.color_max = ft_atoi_base(buf + i, HEXA_CHARSET);
 		else
 			color_set.color_min = ft_atoi_base(buf + i, HEXA_CHARSET);
 		while (buf[i] && ft_strchr(HEXA_CHARSET, buf[i]))
 			i++;
-		nbr_color_parsed++;
+		nbr_color++;
 	}
-	if (nbr_color_parsed != 2)
-		ft_error_exit(1, (char*[]){ERR_COLOR_NBR}, EXIT_FAILURE);
 	return (color_set);
 }
 
