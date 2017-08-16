@@ -14,6 +14,7 @@ SRC= srcs/main.c \
 	srcs/ft_pthread_lines_drawing_routine.c \
 	srcs/ft_set_3d.c \
 	srcs/ft_set_lines.c \
+	srcs/ft_set_mlx_hooks.c \
 	srcs/ft_handler_keys.c \
 	srcs/ft_handler_esc.c \
 	srcs/ft_handler_right.c \
@@ -43,7 +44,7 @@ HDRS= includes/fdf.h
 OBJ= $(SRC:.c=.o)
 HDR_PATH= ./libft/includes/
 CC= gcc
-CC_FLAGS= -v  -Wall -Werror -Wextra  #-g3 -fsanitize=address -fsanitize-blacklist=my_ignores.txt
+CC_FLAGS= -v -Ofast -Wall -Werror -Wextra  -g3 -fsanitize=address -fsanitize-blacklist=my_ignores.txt
 MLX_PATH=./minilibx_macos/
 LIBFT_PATH=./libft/
 FLAGS= -L$(MLX_PATH) -lmlx -L$(LIBFT_PATH) -lft -I$(HDR_PATH) -I./includes -I$(MLX_PATH) -framework OpenGL -framework AppKit

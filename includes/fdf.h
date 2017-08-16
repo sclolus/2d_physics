@@ -7,7 +7,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/25 16:55:51 by sclolus           #+#    #+#             */
-/*   Updated: 2017/08/16 23:32:54 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/08/17 00:00:10 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -214,8 +214,10 @@ void		*ft_pthread_lines_drawing_routine(void *arg);
 # define NBR_KEY_HOOKS 13
 # define INVALID_KEYS_HOOKS_NBR "Invalid keys_hooks number provided in macro expansion"
 
+void			ft_set_mlx_hooks(t_mlx_data *mlx_data, void **params);
 int				ft_handler_keys(int keycode, void *param);
-int				ft_handler_keys_release(int keycode, void *param __attribute__((unused)));
+int				ft_handler_keys_release(int keycode
+					, void *param __attribute__((unused)));
 void			ft_handler_esc(void *param __attribute__((unused)))
 				__attribute__((noreturn));
 void			ft_handler_right(void *param);
