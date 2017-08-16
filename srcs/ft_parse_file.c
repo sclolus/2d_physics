@@ -6,11 +6,20 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/25 20:57:51 by sclolus           #+#    #+#             */
-/*   Updated: 2017/08/16 22:57:49 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/08/16 23:27:43 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "fdf.h"
+
+inline static void	ft_get_min_max_point(int64_t x, int64_t y
+										, int64_t z, t_vec *min_max)
+{
+	min_max[0] = (t_vec){x > min_max[0].x ? x : min_max[0].x
+	, y > min_max[0].z ? y : min_max[0].y, z > min_max[0].z ? z : min_max[0].z};
+	min_max[1] = (t_vec){x < min_max[1].x ? x : min_max[1].x
+	, y < min_max[1].z ? y : min_max[1].y, z < min_max[1].z ? z : min_max[1].z};
+}
 
 static t_vec		*ft_get_data_from_line(char *line
 											, t_mem_block *data)
@@ -30,10 +39,7 @@ static t_vec		*ft_get_data_from_line(char *line
 		if (!line[i])
 			break ;
 		z = ft_atoi(line + i);
-		min_max[0] = (t_vec){x > min_max[0].x ? x : min_max[0].x
-	, y > min_max[0].z ? y : min_max[0].y, z > min_max[0].z ? z : min_max[0].z};
-		min_max[1] = (t_vec){x < min_max[1].x ? x : min_max[1].x
-	, y < min_max[1].z ? y : min_max[1].y, z < min_max[1].z ? z : min_max[1].z};
+		ft_get_min_max_point(x, y, z, min_max);
 		ft_mem_block_push_back_elem(data
 	, &(t_point){{(double)(x), (double)(y), (double)(-z)}, 0}, sizeof(t_point));
 		while (ft_isdigit(line[i]))
@@ -44,7 +50,7 @@ static t_vec		*ft_get_data_from_line(char *line
 	return (min_max);
 }
 
-static void		ft_adjust_points(t_mem_block *data, t_vec *min_max
+static void			ft_adjust_points(t_mem_block *data, t_vec *min_max
 								, t_color_set color_set)
 {
 	uint64_t		i;
@@ -71,7 +77,7 @@ static void		ft_adjust_points(t_mem_block *data, t_vec *min_max
 	}
 }
 
-t_mem_block		*ft_parse_file(char *filename, char *filename_color)
+t_mem_block			*ft_parse_file(char *filename, char *filename_color)
 {
 	t_color_set			color_set;
 	t_mem_block			*data;
@@ -79,8 +85,7 @@ t_mem_block		*ft_parse_file(char *filename, char *filename_color)
 	t_vec				*min_max;
 	int					fd;
 
-	color_set.color_min = 0xFFFFFF;
-	color_set.color_max = 0xFFFFFF;
+	ft_memcpy(&color_set, &(t_color_set){0xFFFFFF, 0xFFFFFF}, sizeof(int) * 2);
 	min_max = NULL;
 	data = ft_create_mem_block(DEFAULT_MEM_BLOCK_SIZE);
 	if ((fd = open(filename, O_RDONLY)) == -1)
