@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/25 16:54:59 by sclolus           #+#    #+#             */
-/*   Updated: 2017/07/26 21:37:02 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/08/16 22:54:00 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,4 +43,6 @@ int	main(int argc, char **argv)
 				, win, frames, lines, data});
 		mlx_loop(connector);
 	}
+	while (1)
+	{};
 }

@@ -6,13 +6,14 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/25 20:57:51 by sclolus           #+#    #+#             */
-/*   Updated: 2017/07/26 21:27:03 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/08/16 22:57:49 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "fdf.h"
 
-static t_vec		*ft_get_data_from_line(char *line, t_mem_block *data)
+static t_vec		*ft_get_data_from_line(char *line
+											, t_mem_block *data)
 {
 	static int64_t	y = 0;
 	static t_vec	min_max[2];
@@ -85,7 +86,11 @@ t_mem_block		*ft_parse_file(char *filename, char *filename_color)
 	if ((fd = open(filename, O_RDONLY)) == -1)
 		ft_error_exit(2, (char*[]){filename, OPEN_FILE_FAILED}, EXIT_FAILURE);
 	while (get_next_line(fd, &line) > 0)
+	{
 		min_max = ft_get_data_from_line(line, data);
+		free(line);
+	}
+	free(line);
 	if (filename_color)
 		color_set = ft_parse_color(filename_color);
 	if (min_max)

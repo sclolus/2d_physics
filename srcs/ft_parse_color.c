@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/07/03 04:10:29 by sclolus           #+#    #+#             */
-/*   Updated: 2017/07/26 21:29:18 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/08/16 22:56:02 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,6 +77,7 @@ t_color_set				ft_parse_color(char *filename_color)
 					, ERR_PARSE_COLOR_READ}, EXIT_FAILURE);
 	if (ret > 18)
 		ft_error_exit(1, (char*[]){ERR_COLOR_INVALID_FILE_SIZE}, EXIT_FAILURE);
+	buf[ret] = '\0';
 	color_set = ft_get_color_set(buf);
 	if (close(fd) == -1)
 		ft_error_exit(3, (char*[]){"Failed to close(): "
