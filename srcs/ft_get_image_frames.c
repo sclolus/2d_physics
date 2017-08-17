@@ -6,13 +6,13 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/28 18:43:15 by sclolus           #+#    #+#             */
-/*   Updated: 2017/07/26 21:16:41 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/08/17 03:05:15 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "fdf.h"
 
-t_image_frame	*ft_get_image_frames(MLX_PTR connector, uint32_t nbr_frames)
+t_image_frame	*ft_get_image_frames(mlx_ptr connector, uint32_t nbr_frames)
 {
 	t_image_frame		*frames;
 	uint32_t			i;
@@ -20,7 +20,7 @@ t_image_frame	*ft_get_image_frames(MLX_PTR connector, uint32_t nbr_frames)
 	i = 0;
 	if (!(frames = (t_image_frame*)ft_memalloc(sizeof(t_image_frame)
 							* nbr_frames)))
-		ft_error_exit(1, (char*[]){MLX_IMG_FRAMES_ERROR}, EXIT_FAILURE);
+		ft_error_exit(1, (char*[]){mlx_img_FRAMES_ERROR}, EXIT_FAILURE);
 	while (i < nbr_frames)
 	{
 		if (!(frames[i].frame = mlx_new_image(connector, WINDOW_WIDTH

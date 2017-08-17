@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/25 16:55:51 by sclolus           #+#    #+#             */
-/*   Updated: 2017/08/17 02:15:44 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/08/17 03:06:00 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@
 
 # define DEBUG 0
 
-# define CHECK(x) do {ft_putendl_fd("_______", 2);ft_putendl_fd(#x, 2);ft_putendl_fd("_______", 2);}while(0);
+//# define CHECK(x) do {ft_putendl_fd("_______", 2);ft_putendl_fd(#x, 2);ft_putendl_fd("_______", 2);}while(0);
 
 # include <stdint.h>
 # include <unistd.h>
@@ -32,9 +32,9 @@
 # include <math.h>
 # include <stdio.h> //
 
-typedef void* MLX_WIN;
-typedef void* MLX_IMG;
-typedef void* MLX_PTR;
+typedef void* mlx_win;
+typedef void* mlx_img;
+typedef void* mlx_ptr;
 
 # define WINDOW_NAME "fdf"
 # define WINDOW_WIDTH 1920
@@ -55,8 +55,8 @@ typedef void* MLX_PTR;
 
 # define ABS(x) (x < 0 ? -x : x)
 
-//typedef struct	s_vec t_vec;
-//typedef struct	s_color_set t_color_set;
+/* typedef struct	s_vec t_vec; */
+/* typedef struct	s_color_set t_color_set; */
 
 typedef struct	s_color_set
 {
@@ -103,7 +103,7 @@ typedef enum	e_frame_state
 
 typedef struct	s_image_frame
 {
-	MLX_IMG			frame;
+	mlx_img			frame;
 	void			*buffer;
 	t_frame_state	state;
 	int32_t			bits_per_pixel;
@@ -113,8 +113,8 @@ typedef struct	s_image_frame
 
 typedef struct	s_mlx_data
 {
-	MLX_PTR			connector;
-	MLX_WIN			win;
+	mlx_ptr			connector;
+	mlx_win			win;
 	t_image_frame	*frame;
 }				t_mlx_data;
 
@@ -143,7 +143,6 @@ typedef struct	s_line
 	t_point *point_1;
 	t_point *point_2;
 }				t_line;
-
 /*
 ** Mem_block handling
 */
@@ -160,7 +159,7 @@ t_mem_block		*ft_set_lines(t_mem_block *mem_block);
 ** Frames handling
 */
 
-t_image_frame	*ft_get_image_frames(MLX_PTR connector, uint32_t nbr_frames);
+t_image_frame	*ft_get_image_frames(mlx_ptr connector, uint32_t nbr_frames);
 void			*ft_pthread_frame_clear_routine(void *arg);
 t_image_frame	*ft_claim_image_frame(t_image_frame *frames);
 
@@ -196,7 +195,7 @@ typedef void (*f_draw_line)(t_mlx_data *, t_point, t_point);
 
 void			ft_set_3d(t_mem_block *data);
 void			ft_draw_line(t_mlx_data *mlx_data, t_line *line) __attribute__((hot));
-void			ft_draw_lines(MLX_PTR connector, MLX_WIN win, t_image_frame *frames
+void			ft_draw_lines(mlx_ptr connector, mlx_win win, t_image_frame *frames
 						, t_mem_block *data);
 int				ft_draw_lines_hook(void *param);
 int32_t			ft_line_clipping(t_line *tmp);
@@ -209,8 +208,8 @@ void			ft_swap_t_point_in_line(t_line *line);
 # define DRAWING_THREAD_NBR 8
 # define ERR_PTHREAD_FAIL "pthread_create() failed"
 
-pthread_t	*ft_pthread_create_lines_drawing_threads(MLX_PTR connector
-			, MLX_WIN win, t_image_frame *frame, t_mem_block *data);
+pthread_t	*ft_pthread_create_lines_drawing_threads(mlx_ptr connector
+			, mlx_win win, t_image_frame *frame, t_mem_block *data);
 void		ft_pthread_wait_drawing_threads(pthread_t *thread_tab);
 void		*ft_pthread_lines_drawing_routine(void *arg);
 
@@ -272,7 +271,7 @@ int32_t			ft_get_lerp(double z1, double z2
 # define MLX_INIT_ERROR "mlx_init() failed"
 # define MLX_NEW_WIN_ERROR "mlx_new_window() failed"
 # define MLX_NEW_IMG_ERROR "mlx_new_image() failed"
-# define MLX_IMG_FRAMES_ERROR "malloc() failed to alloc image frames"
+# define mlx_img_FRAMES_ERROR "malloc() failed to alloc image frames"
 # define OPEN_FILE_FAILED ": open() failed"
 # define ERR_PARSE_COLOR_READ "read() failed"
 

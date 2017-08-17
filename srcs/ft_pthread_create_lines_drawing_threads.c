@@ -6,14 +6,14 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/07/01 18:41:09 by sclolus           #+#    #+#             */
-/*   Updated: 2017/07/26 21:19:27 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/08/17 03:04:39 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "fdf.h"
 
-pthread_t	*ft_pthread_create_lines_drawing_threads(MLX_PTR connector
-					, MLX_WIN win, t_image_frame *frame, t_mem_block *data)
+pthread_t	*ft_pthread_create_lines_drawing_threads(mlx_ptr connector
+					, mlx_win win, t_image_frame *frame, t_mem_block *data)
 {
 	static pthread_t					threat_tab[DRAWING_THREAD_NBR];
 	static t_pthread_execution_data		pthread_data[DRAWING_THREAD_NBR];

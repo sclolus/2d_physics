@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/27 06:49:50 by sclolus           #+#    #+#             */
-/*   Updated: 2017/07/26 21:05:30 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/08/17 03:05:15 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,6 @@ void	ft_handler_pad_up(void *param)
 		if (i * sizeof(t_line) >= tmp->offset && tmp->next && !(i = 0))
 			tmp = tmp->next;
 	}
-	ft_draw_lines(((MLX_PTR)((char**)param)[0]), (MLX_PTR)((char**)param)[1]
-		, (MLX_IMG)((char**)param)[2], (t_mem_block*)((t_mem_block**)param)[3]);
+	ft_draw_lines(((mlx_ptr)((char**)param)[0]), (mlx_ptr)((char**)param)[1]
+		, (mlx_img)((char**)param)[2], (t_mem_block*)((t_mem_block**)param)[3]);
 }
