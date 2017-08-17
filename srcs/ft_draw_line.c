@@ -6,13 +6,13 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/25 23:22:11 by sclolus           #+#    #+#             */
-/*   Updated: 2017/08/17 00:29:12 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/08/17 02:15:04 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "fdf.h"
 
-static void	ft_case_1(t_mlx_data *mlx_data, t_line *line)
+inline static void			ft_case_1(t_mlx_data *mlx_data, t_line *line)
 {
 	double				e;
 	double				derror;
@@ -40,7 +40,7 @@ static void	ft_case_1(t_mlx_data *mlx_data, t_line *line)
 	}
 }
 
-static void	ft_case_2(t_mlx_data *mlx_data, t_line *line)
+inline static void			ft_case_2(t_mlx_data *mlx_data, t_line *line)
 {
 	double				e;
 	double				derror;
@@ -68,7 +68,7 @@ static void	ft_case_2(t_mlx_data *mlx_data, t_line *line)
 	}
 }
 
-static void	ft_case_3(t_mlx_data *mlx_data, t_line *line)
+inline static void			ft_case_3(t_mlx_data *mlx_data, t_line *line)
 {
 	double				e;
 	double				derror;
@@ -96,7 +96,7 @@ static void	ft_case_3(t_mlx_data *mlx_data, t_line *line)
 	}
 }
 
-static void	ft_case_4(t_mlx_data *mlx_data, t_line *line)
+inline static void			ft_case_4(t_mlx_data *mlx_data, t_line *line)
 {
 	double				e;
 	double				derror;
@@ -124,7 +124,7 @@ static void	ft_case_4(t_mlx_data *mlx_data, t_line *line)
 	}
 }
 
-void		ft_draw_line(t_mlx_data *mlx_data, t_line *line)
+void						ft_draw_line(t_mlx_data *mlx_data, t_line *line)
 {
 	t_line	tmp;
 

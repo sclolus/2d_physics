@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/25 16:55:51 by sclolus           #+#    #+#             */
-/*   Updated: 2017/08/17 00:43:10 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/08/17 02:15:44 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -195,7 +195,7 @@ t_color_set		ft_parse_color(char *filename_color);
 typedef void (*f_draw_line)(t_mlx_data *, t_point, t_point);
 
 void			ft_set_3d(t_mem_block *data);
-void			ft_draw_line(t_mlx_data *mlx_data, t_line *line);
+void			ft_draw_line(t_mlx_data *mlx_data, t_line *line) __attribute__((hot));
 void			ft_draw_lines(MLX_PTR connector, MLX_WIN win, t_image_frame *frames
 						, t_mem_block *data);
 int				ft_draw_lines_hook(void *param);
@@ -248,7 +248,8 @@ double			ft_get_quat_magnitude(t_quat *quat);
 t_quat			ft_normalize_quat(t_quat *quat);
 t_quat			ft_get_conjugate_quat(t_quat *quat);
 t_quat			ft_multiply_quat(t_quat a, t_quat b);
-void			ft_quat_rotate_points(t_vec *axis, double angle, t_mem_block *data);
+void			ft_quat_rotate_points(t_vec *axis, double angle
+				, t_mem_block *data)  __attribute__((hot));
 
 /*
 ** Interpolation

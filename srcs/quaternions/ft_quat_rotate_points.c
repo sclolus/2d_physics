@@ -6,13 +6,13 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/27 09:21:26 by sclolus           #+#    #+#             */
-/*   Updated: 2017/08/17 02:02:03 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/08/17 02:15:32 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "fdf.h"
 
-inline static void	ft_set_rot_quats(t_vec *axis
+inline static void			ft_set_rot_quats(t_vec *axis
 	, t_quat *rotation_quat, t_quat *rotation_quat_prime, double angle)
 {
 	*rotation_quat = (t_quat){axis->x * sin(angle / 2), axis->y * sin(angle / 2)
@@ -20,7 +20,7 @@ inline static void	ft_set_rot_quats(t_vec *axis
 	*rotation_quat_prime = ft_get_conjugate_quat(rotation_quat);
 }
 
-inline static void	ft_update_line_data(t_mem_block *data, uint64_t i)
+inline static void			ft_update_line_data(t_mem_block *data, uint64_t i)
 {
 	((t_line*)data->block + i)->dx = ((t_line*)data->block + i)->start.x
 			- ((t_line*)data->block + i)->end.x;
@@ -30,7 +30,7 @@ inline static void	ft_update_line_data(t_mem_block *data, uint64_t i)
 			/ ((t_line*)data->block + i)->dx;
 }
 
-void				ft_quat_rotate_points(t_vec *axis, double angle
+void						ft_quat_rotate_points(t_vec *axis, double angle
 										, t_mem_block *data)
 {
 	t_quat		rotation_quat;
