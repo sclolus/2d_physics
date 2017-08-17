@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/25 16:54:59 by sclolus           #+#    #+#             */
-/*   Updated: 2017/08/17 02:55:03 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/08/17 04:02:22 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ int	main(int argc, char **argv)
 	t_mem_block			*data;
 	t_mem_block			*lines;
 
-	if (argc != 0)
+	if (argc != 1)
 	{
 		data = ft_parse_file(argv[1], argv[2]);
 		if (!(mlx_data.connector = mlx_init()))

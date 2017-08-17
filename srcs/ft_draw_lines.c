@@ -6,13 +6,13 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/25 23:20:15 by sclolus           #+#    #+#             */
-/*   Updated: 2017/08/17 03:03:11 by sclolus          ###   ########.fr       */
+/*   Updated: 2017/08/17 03:56:09 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "fdf.h"
 
-void	ft_draw_lines(mlx_ptr connector, mlx_win win, t_image_frame *frames
+void	ft_draw_lines(t_mlx_ptr connector, t_mlx_win win, t_image_frame *frames
 					, t_mem_block *data)
 {
 	t_image_frame	*frame;

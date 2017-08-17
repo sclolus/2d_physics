@@ -46,7 +46,7 @@ HDRS= includes/fdf.h
 OBJ= $(SRC:.c=.o)
 HDR_PATH= ./libft/includes/
 CC= gcc
-CC_FLAGS= -v -Ofast -Wall -Werror -Wextra #  -g3 -fsanitize=address -fsanitize-blacklist=my_ignores.txt
+CC_FLAGS= -v -Ofast -Wall -Werror -Wextra # -g3 -fsanitize=address -fsanitize-blacklist=my_ignores.txt
 MLX_PATH=./minilibx_macos/
 LIBFT_PATH=./libft/
 FLAGS= -L$(MLX_PATH) -lmlx -L$(LIBFT_PATH) -lft -I$(HDR_PATH) -I./includes -I$(MLX_PATH) -framework OpenGL -framework AppKit
@@ -54,7 +54,7 @@ FLAGS= -L$(MLX_PATH) -lmlx -L$(LIBFT_PATH) -lft -I$(HDR_PATH) -I./includes -I$(M
 all: submodule $(NAME)
 
 submodule:
-#	@make -C minilibx_macos
+	@make -C minilibx_macos
 	@make -C libft/
 
 $(NAME): $(OBJ)
@@ -65,7 +65,7 @@ $(NAME): $(OBJ)
 clean:
 	rm -f $(OBJ)
 	make -C $(LIBFT_PATH) clean
-#	make -C $(MLX_PATH) clean
+	make -C $(MLX_PATH) clean
 fclean: clean
 	rm -f $(NAME)
 	make -C $(LIBFT_PATH) fclean
