@@ -187,6 +187,7 @@ typedef struct	s_univers {
 	object		*objects;
 	t_2d_vector	cam;
 	float		scaling_factor;
+	uint32_t	current_follow;
 }				univers;
 
 extern univers	*g_univers;

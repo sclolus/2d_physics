@@ -38,4 +38,5 @@ void	ft_handler_m(void *param)
 	random_index = rand() % g_univers->nbr_objects;
 
 	g_univers->cam = g_univers->objects[random_index].pos;
+	g_univers->current_follow = random_index;
 }

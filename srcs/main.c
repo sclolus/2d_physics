@@ -247,7 +247,7 @@ void	univers_apply_elapsed_time(univers *univers, float elapsed_time)
 	while (i < univers->nbr_objects)
 	{
 		apply_elapsed_time(&univers->objects[i], elapsed_time);
-		univers->objects[i].color = lerp(0.0, 100000.0, vector2d_magnitude(univers->objects[i].velocity), 0xFF, 0xFFFF00);
+		univers->objects[i].color = lerp(0.0, 10000.0, vector2d_magnitude(univers->objects[i].velocity), 0xFF, 0xFF0000);
 		i++;
 	}
 
@@ -471,6 +471,9 @@ int	draw_stuff()
 	last_time = new;
 	if (new - old < CLOCK_FRAME_DELTA)
 		return 0;
+	g_univers->cam = g_univers->objects[g_univers->current_follow].pos;
+	g_univers->cam.x -= WINDOW_WIDTH / 2;
+	g_univers->cam.y -= WINDOW_HEIGHT / 2;
 	draw_univers(&univers);
 	mlx_put_image_to_window(g_mlx_data.connector, g_mlx_data.win, g_frame.frame, 0, 0);
 
