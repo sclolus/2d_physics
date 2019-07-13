@@ -22,6 +22,10 @@
 # include <fcntl.h>
 # include <pthread.h>
 # include <math.h>
+# include <stdio.h>
+# include <assert.h>
+# include <time.h>
+# include <stdbool.h>
 
 typedef void* t_mlx_win;
 typedef void* t_mlx_img;
@@ -39,10 +43,15 @@ typedef void* t_mlx_ptr;
 # define ROTATION_SPEED 9
 # define ZOOM_RATIO 1.13
 # define DEZOOM_RATIO 1 / ZOOM_RATIO
+# define FPS 60
+# define CLOCK_FRAME_DELTA CLOCKS_PER_SEC / FPS
 
 # define NBR_IMAGE_FRAME 8
 
 # define STDIN_NOFILE 0
+# define GRAVITATIONAL_CONSTANT (6.674 / 100000000000.0)
+# define BASE_SCALING_FACTOR 0.03
+# define DEFAULT_OBJECT_NUMBER 300
 
 # define ABS(x) (x < 0 ? -x : x)
 
@@ -132,6 +141,59 @@ typedef struct	s_line
 	t_point *point_2;
 }				t_line;
 
+
+typedef struct s_2d_vector
+{
+	float	x;
+	float	y;
+}			   t_2d_vector;
+
+typedef struct s_rectangle
+{
+	t_2d_vector min;
+	t_2d_vector max;
+}				t_rectangle;
+
+typedef struct	s_circle
+{
+	float		radius;
+}				t_circle;
+
+
+typedef uint32_t	t_color;
+typedef enum	s_shape_kind {
+	CIRCLE,
+	RECTANGLE,
+	ATTRACTOR,
+	NONE,
+}				shape_kind;
+
+typedef struct s_object {
+	t_color			color;
+	shape_kind		kind;
+	t_2d_vector		pos;
+	union {
+		t_circle	circle;
+		t_circle	attractor;
+	};
+	t_2d_vector		velocity;
+	t_2d_vector		acceleration;
+	float			mass;
+	t_2d_vector		applied_forces;
+}				object;
+
+typedef struct	s_univers {
+	uint32_t	nbr_objects;
+	object		*objects;
+	t_2d_vector	cam;
+	float		scaling_factor;
+}				univers;
+
+extern univers	*g_univers;
+void	init_univers(univers *univers);
+void	univers_remove_object(univers *univers, uint32_t index);
+void	univers_add_object(univers *univers, object object);
+
 /*
 ** Mem_block handling
 */
@@ -207,7 +269,7 @@ void			*ft_pthread_lines_drawing_routine(void *arg);
 ** Key handling
 */
 
-# define NBR_KEY_HOOKS 13
+# define NBR_KEY_HOOKS 5
 # define INVALID_KEYS_HOOKS_NBR "Invalid keys number given in macro expansion"
 
 void			ft_set_mlx_hooks(t_mlx_data *mlx_data, void **params);
@@ -227,6 +289,8 @@ void			ft_handler_w(void *param);
 void			ft_handler_s(void *param);
 void			ft_handler_d(void *param);
 void			ft_handler_a(void *param);
+void			ft_handler_r(void *param);
+void			ft_handler_m(void *param);
 
 /*
 ** Quaternions

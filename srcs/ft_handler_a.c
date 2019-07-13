@@ -20,3 +20,22 @@ void	ft_handler_a(void *param)
 				, (t_mlx_img)((char**)param)[2]
 				, (t_mem_block*)((t_mem_block**)param)[3]);
 }
+
+void	ft_handler_r(void *param)
+{
+	(void)param;
+	free(g_univers->objects);
+	g_univers->nbr_objects = 0;
+	g_univers->objects = NULL;
+	init_univers(g_univers);
+}
+
+void	ft_handler_m(void *param)
+{
+	uint32_t	random_index;
+
+	(void)param;
+	random_index = rand() % g_univers->nbr_objects;
+
+	g_univers->cam = g_univers->objects[random_index].pos;
+}
