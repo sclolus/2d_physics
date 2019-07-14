@@ -188,12 +188,16 @@ typedef struct	s_univers {
 	t_2d_vector	cam;
 	float		scaling_factor;
 	uint32_t	current_follow;
+	float		time_ratio;
 }				univers;
 
 extern univers	*g_univers;
+
 void	init_univers(univers *univers);
 void	univers_remove_object(univers *univers, uint32_t index);
 void	univers_add_object(univers *univers, object object);
+void	univers_map_objects(univers *univers, void (*lambda)(object *obj, void *private), void *private);
+void univers_map_2d_objects(univers *univers, void (*lambda)(object *a, object *b, void *private), void *private);
 
 /*
 ** Mem_block handling
@@ -270,7 +274,7 @@ void			*ft_pthread_lines_drawing_routine(void *arg);
 ** Key handling
 */
 
-# define NBR_KEY_HOOKS 5
+# define NBR_KEY_HOOKS 7
 # define INVALID_KEYS_HOOKS_NBR "Invalid keys number given in macro expansion"
 
 void			ft_set_mlx_hooks(t_mlx_data *mlx_data, void **params);
@@ -292,6 +296,8 @@ void			ft_handler_d(void *param);
 void			ft_handler_a(void *param);
 void			ft_handler_r(void *param);
 void			ft_handler_m(void *param);
+void			ft_handler_left(void *param);
+void			ft_handler_right(void *param);
 
 /*
 ** Quaternions

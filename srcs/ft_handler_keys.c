@@ -28,8 +28,10 @@ static t_keycode_f	*ft_get_keycodes_f(void)
 		/* {ft_handler_w, KEY_W, 0}, */
 		/* {ft_handler_s, KEY_S, 0}, */
 		/* {ft_handler_e, KEY_E, 0}, */
-		{ft_handler_pad_up, KEY_PAD_ADD, 0},
-		{ft_handler_pad_down, KEY_PAD_SUB, 0}};
+		{ft_handler_left, KEY_LEFT, 0},
+		{ft_handler_right, KEY_RIGHT, 0},
+		{ft_handler_pad_up, KEY_UP, 0},
+		{ft_handler_pad_down, KEY_DOWN, 0}};
 
 	if (sizeof(keycodes_f) / sizeof(t_keycode_f) != NBR_KEY_HOOKS)
 		ft_error_exit(1, (char*[]){INVALID_KEYS_HOOKS_NBR}, EXIT_FAILURE);

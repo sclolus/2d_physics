@@ -185,10 +185,12 @@ void	apply_elapsed_time(object *obj, float elapsed_time)
 
 void apply_gravity(object *obj, object *attractor)
 {
+	if (obj->kind == ATTRACTOR)
+		return ;
 	t_2d_vector a = vector2d_sub(attractor->pos, obj->pos);
 
 	float distance = vector2d_distance(obj->pos, attractor->pos);
-	if ((obj->kind == CIRCLE || obj->kind == ATTRACTOR ) && distance <= obj->circle.radius)
+	if ((obj->kind == CIRCLE) && distance <= obj->circle.radius)
 	{
 		distance = obj->circle.radius;
 	}
@@ -222,8 +224,8 @@ bool	circle_intersection(object *a, object *b)
 {
 	/* assert(a->kind == CIRCLE && b->kind == CIRCLE); */
 
-	float radius_a = (a->circle.radius * g_univers->scaling_factor) * (a->circle.radius * g_univers->scaling_factor);
-	float radius_b = (b->circle.radius * g_univers->scaling_factor) * (b->circle.radius * g_univers->scaling_factor);
+	float radius_a = (a->circle.radius/*  * g_univers->scaling_factor */) * (a->circle.radius/*  * g_univers->scaling_factor */);
+	float radius_b = (b->circle.radius/*  * g_univers->scaling_factor */) * (b->circle.radius/*  * g_univers->scaling_factor */);
 
 	float x_a = a->pos.x * a->pos.x;
 	float y_a = a->pos.y * a->pos.y;
@@ -240,82 +242,107 @@ bool	circle_intersection(object *a, object *b)
 
 }
 
+void	apply_elapsed_time_wrapper(object *object, void *private)
+{
+	float elapsed_time = *((float *)private);
+	apply_elapsed_time(object, elapsed_time);
+
+}
+
+void	color_object(object *object, void *private)
+{
+	(void)private;
+	object->color = lerp(0.0, 10000.0, vector2d_magnitude(object->velocity), 0xFF, 0xFF0000);
+}
+
+void	apply_collision(object *a, object *b, void *private)
+{
+	univers *univers = private;
+
+	if (circle_intersection(a, b))
+	{
+		float i_r = a->circle.radius;
+		float i_m = a->mass;
+
+		a->circle.radius += b->circle.radius;
+		a->mass += b->mass;
+		b->circle.radius += i_r;
+		b->mass += i_m;
+
+		/* univers_remove_object(univers, u); */
+		printf("There are now %u objects\n", univers->nbr_objects);
+	}
+}
+
 void	univers_apply_elapsed_time(univers *univers, float elapsed_time)
 {
-	uint32_t i = 0;
+	univers_map_objects(univers, &apply_elapsed_time_wrapper, &elapsed_time);
+	univers_map_objects(univers, &color_object, NULL);
+	univers_map_2d_objects(univers, &apply_collision, univers);
+}
 
-	while (i < univers->nbr_objects)
-	{
-		apply_elapsed_time(&univers->objects[i], elapsed_time);
-		univers->objects[i].color = lerp(0.0, 10000.0, vector2d_magnitude(univers->objects[i].velocity), 0xFF, 0xFF0000);
-		i++;
-	}
-
-	i = 0;
-	while (i < univers->nbr_objects)
-	{
-		uint32_t u = 0;
-		while (i != u && u < univers->nbr_objects)
-		{
-			/* if (univers->objects[i].kind != CIRCLE || univers->objects[u].kind != CIRCLE) { */
-			/* 	u++; */
-			/* 	continue; */
-			/* } */
-			if (circle_intersection(&univers->objects[i], &univers->objects[u]))
-			{
-				float i_r = univers->objects[i].circle.radius;
-				float i_m = univers->objects[i].mass;
-				univers->objects[i].circle.radius += univers->objects[u].circle.radius;
-				univers->objects[i].mass += univers->objects[u].mass;
-				univers->objects[u].circle.radius += i_r;
-				univers->objects[u].mass += i_m;
-
-				/* univers_remove_object(univers, u); */
-				printf("There are now %u objects\n", univers->nbr_objects);
-			}
-			u++;
-		}
-		i++;
-	}
-
+void	apply_acceleration(object *object, void *private)
+{
+	(void)private;
+	object->acceleration = vector2d_scalar_divide(object->applied_forces, object->mass);
 }
 
 void	univers_apply_acceleration(univers *univers)
 {
-	uint32_t i = 0;
-
-	while (i < univers->nbr_objects)
-	{
-		univers->objects[i].acceleration = vector2d_scalar_divide(univers->objects[i].applied_forces, univers->objects[i].mass);
-		i++;
-	}
+	univers_map_objects(univers, &apply_acceleration, NULL);
 }
 
-void	univers_apply_gravity(univers *univers)
+
+void	univers_map_objects(univers *univers, void (*lambda)(object *obj, void *private), void *private)
 {
 	uint32_t i = 0;
 
 	while (i < univers->nbr_objects)
 	{
-		uint32_t u = 0;
+		lambda(&univers->objects[i], private);
+		i++;
+	}
+}
 
-		univers->objects[i].acceleration = (t_2d_vector){ 0, 0 };
-		univers->objects[i].applied_forces = (t_2d_vector){ 0, 0 };
-		if (univers->objects[i].kind == ATTRACTOR) {
-			i++;
-			continue ;
-		}
+
+void univers_map_2d_objects(univers *univers, void (*lambda)(object *a, object *b, void *private), void *private)
+{
+	uint32_t	i = 0;
+	object		*objects = univers->objects;
+
+	assert(objects);
+	while (i < univers->nbr_objects)
+	{
+		uint32_t u = 0;
 		while (u < univers->nbr_objects)
 		{
-			if (i == u) {
-				u++;
-				continue;
-			}
-			apply_gravity(&univers->objects[i], &univers->objects[u]);
+			if (i != u)
+				lambda(&objects[i], &objects[u], private);
 			u++;
 		}
 		i++;
 	}
+}
+
+
+void	object_reset_forces(object *object, void *private)
+{
+	(void)private;
+	object->acceleration = (t_2d_vector){ 0, 0 };
+	object->applied_forces = (t_2d_vector){ 0, 0 };
+
+}
+
+void	apply_gravity_wrapper(object *a, object *b, void *private)
+{
+	(void)private;
+	apply_gravity(a, b);
+}
+
+void	univers_apply_gravity(univers *univers)
+{
+	univers_map_objects(univers, &object_reset_forces, NULL);
+	univers_map_2d_objects(univers, &apply_gravity_wrapper, NULL);
 }
 
 void	univers_remove_object(univers *univers, uint32_t index)
@@ -338,15 +365,15 @@ void	univers_add_object(univers *univers, object object)
 	univers->nbr_objects++;
 }
 
+void	draw_object_wrapper(object *object, void *private)
+{
+	(void)private;
+	draw_object(object);
+}
+
 void	draw_univers(univers *univers)
 {
-	uint32_t i = 0;
-
-	while (i < univers->nbr_objects)
-	{
-		draw_object(&univers->objects[i]);
-		i++;
-	}
+	univers_map_objects(univers, &draw_object_wrapper, NULL);
 }
 
 void	init_univers(univers *univers)
@@ -437,6 +464,7 @@ void	init_univers(univers *univers)
 	univers->cam.x = 0;
 	univers->cam.y = 0;
 	univers->scaling_factor = BASE_SCALING_FACTOR;
+	univers->time_ratio = 1;
 }
 
 int	draw_stuff()
@@ -452,6 +480,7 @@ int	draw_stuff()
 			.y = 0,
 		},
 		.scaling_factor = BASE_SCALING_FACTOR,
+		.time_ratio = 1,
 	};
 
 
@@ -463,7 +492,7 @@ int	draw_stuff()
 		last_time = old;
 	}
 	new = clock();
-	float elapsed_time = (float)(new - last_time) / (float)CLOCKS_PER_SEC;
+	float elapsed_time = (float)(new - last_time) / (float)CLOCKS_PER_SEC * g_univers->time_ratio;
 
 	univers_apply_elapsed_time(&univers, elapsed_time);
 	univers_apply_gravity(&univers);
