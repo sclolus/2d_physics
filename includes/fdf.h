@@ -141,12 +141,13 @@ typedef struct	s_line
 	t_point *point_2;
 }				t_line;
 
-
 typedef struct s_2d_vector
 {
-	float	x;
-	float	y;
+	double	x;
+	double	y;
 }			   t_2d_vector;
+
+double		vector2d_distance(const t_2d_vector a, const t_2d_vector b);
 
 typedef struct s_rectangle
 {
@@ -156,7 +157,7 @@ typedef struct s_rectangle
 
 typedef struct	s_circle
 {
-	float		radius;
+	double		radius;
 }				t_circle;
 
 
@@ -178,7 +179,7 @@ typedef struct s_object {
 	};
 	t_2d_vector		velocity;
 	t_2d_vector		acceleration;
-	float			mass;
+	double			mass;
 	t_2d_vector		applied_forces;
 }				object;
 
@@ -186,9 +187,9 @@ typedef struct	s_univers {
 	uint32_t	nbr_objects;
 	object		*objects;
 	t_2d_vector	cam;
-	float		scaling_factor;
+	double		scaling_factor;
 	uint32_t	current_follow;
-	float		time_ratio;
+	double		time_ratio;
 }				univers;
 
 extern univers	*g_univers;
@@ -197,8 +198,8 @@ void	init_univers(univers *univers);
 void	univers_remove_object(univers *univers, uint32_t index);
 void	univers_add_object(univers *univers, object object);
 void	univers_map_objects(univers *univers, void (*lambda)(object *obj, void *private), void *private);
-void univers_map_2d_objects(univers *univers, void (*lambda)(object *a, object *b, void *private), void *private);
-
+void	univers_map_2d_objects(univers *univers, void (*lambda)(object *a, object *b, void *private), void *private);
+void	object_reset_forces(object *object, void *private);
 /*
 ** Mem_block handling
 */
@@ -274,10 +275,11 @@ void			*ft_pthread_lines_drawing_routine(void *arg);
 ** Key handling
 */
 
-# define NBR_KEY_HOOKS 7
+# define NBR_KEY_HOOKS 8
 # define INVALID_KEYS_HOOKS_NBR "Invalid keys number given in macro expansion"
 
 void			ft_set_mlx_hooks(t_mlx_data *mlx_data, void **params);
+int				ft_handler_mouse(int button, int x, int y, void *private);
 int				ft_handler_keys(int keycode, void *param);
 int				ft_handler_keys_release(int keycode
 					, void __attribute__((unused)) *param);
@@ -289,6 +291,7 @@ void			ft_handler_up(void *param);
 void			ft_handler_pad_down(void *param);
 void			ft_handler_pad_up(void *param);
 void			ft_handler_q(void *param);
+void			ft_handler_s(void *param);
 void			ft_handler_e(void *param);
 void			ft_handler_w(void *param);
 void			ft_handler_s(void *param);

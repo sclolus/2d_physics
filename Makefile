@@ -18,6 +18,7 @@ SRC= srcs/main.c \
 	srcs/ft_set_lines.c \
 	srcs/ft_set_mlx_hooks.c \
 	srcs/ft_handler_keys.c \
+	srcs/ft_handler_mouse.c \
 	srcs/ft_handler_esc.c \
 	srcs/ft_handler_right.c \
 	srcs/ft_handler_left.c \

@@ -22,6 +22,7 @@ static t_keycode_f	*ft_get_keycodes_f(void)
 		/* {ft_handler_down, KEY_DOWN, 0}, */
 		/* {ft_handler_q, KEY_Q, 0}, */
 		{ft_handler_r, KEY_R, 0},
+		{ft_handler_s, KEY_S, 0},
 		{ft_handler_m, KEY_M, 0},
 		/* {ft_handler_a, KEY_A, 0}, */
 		/* {ft_handler_d, KEY_D, 0}, */

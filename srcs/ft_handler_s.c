@@ -14,9 +14,8 @@
 
 void	ft_handler_s(void *param)
 {
-	ft_quat_rotate_points(&(t_vec){0, 1, 0}, -ROTATION_SPEED * PI / 180
-				, (t_mem_block*)((t_mem_block**)param)[3]);
-	ft_draw_lines(((t_mlx_ptr)((char**)param)[0]), (t_mlx_ptr)((char**)param)[1]
-				, (t_mlx_img)((char**)param)[2]
-				, (t_mem_block*)((t_mem_block**)param)[3]);
+	(void)param;
+	object *object = &g_univers->objects[g_univers->current_follow];
+
+	object_reset_forces(object, NULL);
 }
