@@ -7,15 +7,8 @@ SRC= srcs/main.c \
 	srcs/ft_get_image_frames.c \
 	srcs/ft_pthread_frame_clear_routine.c \
 	srcs/ft_claim_frame.c \
-	srcs/ft_draw_line.c \
-	srcs/ft_draw_lines.c \
-	srcs/ft_line_clipping.c \
-	srcs/ft_swap_t_point_in_line.c \
-	srcs/ft_pthread_create_lines_drawing_threads.c \
 	srcs/ft_pthread_wait_drawing_threads.c \
-	srcs/ft_pthread_lines_drawing_routine.c \
 	srcs/ft_set_3d.c \
-	srcs/ft_set_lines.c \
 	srcs/ft_set_mlx_hooks.c \
 	srcs/ft_handler_keys.c \
 	srcs/ft_handler_mouse.c \
@@ -32,16 +25,17 @@ SRC= srcs/main.c \
 	srcs/ft_handler_d.c \
 	srcs/ft_handler_s.c \
 	srcs/ft_handler_w.c \
+	srcs/ft_handler_mouse_motion.c \
 	srcs/ft_get_reduction_coefficient.c \
 	srcs/ft_get_perspective_angle.c \
-	srcs/quaternions/ft_get_conjugate_quat.c \
-	srcs/quaternions/ft_get_quat_magnitude.c \
-	srcs/quaternions/ft_multiply_quat.c \
-	srcs/quaternions/ft_normalize_quat.c \
-	srcs/quaternions/ft_quat_rotate_points.c \
-	srcs/ft_get_lerp.c \
-	srcs/ft_get_z_coord.c \
-	srcs/ft_get_color_interpolation.c
+	srcs/ft_get_lerp.c
+
+	# srcs/quaternions/ft_get_conjugate_quat.c \
+	# srcs/quaternions/ft_get_quat_magnitude.c \
+	# srcs/quaternions/ft_multiply_quat.c \
+	# srcs/quaternions/ft_normalize_quat.c \
+	# srcs/quaternions/ft_quat_rotate_points.c \
+
 
 HDRS= includes/fdf.h
 OBJ= $(SRC:.c=.o)

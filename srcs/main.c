@@ -17,6 +17,8 @@ static t_mlx_data g_mlx_data;
 static t_image_frame g_frame;
 univers				*g_univers;
 
+double	clamp(double x, double min, double max);
+
 void	rectangle_map(t_rectangle rec, void (*lambda)(int32_t x, int32_t y, void *private), void *private)
 {
 	int32_t	min_x = (int32_t)rec.min.x;
@@ -34,8 +36,6 @@ void	rectangle_map(t_rectangle rec, void (*lambda)(int32_t x, int32_t y, void *p
 
 inline __attribute__((always_inline)) void pixel_put(int32_t x, int32_t y, uint32_t color)
 {
-	x -= (int32_t)g_univers->cam.x;
-	y -= (int32_t)g_univers->cam.y;
 	if (x >= 0 && y >= 0
 		&& x < WINDOW_WIDTH && y < WINDOW_HEIGHT)
 		((uint32_t *)(g_frame.buffer))[x + y * WINDOW_WIDTH] = color;
@@ -44,17 +44,18 @@ inline __attribute__((always_inline)) void pixel_put(int32_t x, int32_t y, uint3
 static void	circle_predicate(int32_t x, int32_t y, void *private)
 {
 	object *obj = ((object*)private);
+	double scaling_factor = g_univers->scaling_factor;
 
 	assert(obj->kind == CIRCLE || obj->kind == ATTRACTOR);
 
-	double f_x = (double)x;
-	double f_y = (double)y;
+	double f_x = (double)x / (scaling_factor) + g_univers->cam.x;
+	double f_y = (double)y / (scaling_factor) + g_univers->cam.y;
 
-	double dx = (obj->pos.x - f_x);
-	double dy = (obj->pos.y - f_y);
-	if (sqrt(dx * dx + dy * dy) <= obj->circle.radius * g_univers->scaling_factor) {
+	double dx = (f_x - obj->pos.x);
+	double dy = (f_y - obj->pos.y);
+
+	if (sqrt(dx * dx + dy * dy) <= obj->circle.radius) {
 		pixel_put(x, y, obj->color);
-
 	}
 }
 
@@ -66,23 +67,59 @@ void	draw_circle(object *obj)
 	assert(obj->kind == CIRCLE || obj->kind == ATTRACTOR);
 
 	int32_t delta = obj->circle.radius * g_univers->scaling_factor;
-	min_x = obj->pos.x - delta;
-	min_y = obj->pos.y - delta;
-	max_x = obj->pos.x + delta;
-	max_y = obj->pos.y + delta;
+	min_x = obj->pos.x - delta - g_univers->cam.x;
+	min_y = obj->pos.y - delta - g_univers->cam.y;
+	max_x = obj->pos.x + delta - g_univers->cam.x;
+	max_y = obj->pos.y + delta - g_univers->cam.y;
 
 	t_rectangle	rec = {
 		.min = {
-			.x = min_x,
-			.y = min_y,
+			.x = clamp(min_x, 0, WINDOW_WIDTH) /* 0 */,
+			.y = clamp(min_y, 0, WINDOW_HEIGHT) /* 0 */,
 		},
 		.max = {
-			.x = max_x,
-			.y = max_y,
+			.x = clamp(max_x, 0, WINDOW_WIDTH)/* WINDOW_WIDTH */,
+			.y = clamp(max_y, 0, WINDOW_HEIGHT) /* WINDOW_HEIGHT */,
 		},
 	};
 	rectangle_map(rec, &circle_predicate, obj);
 }
+
+
+double		vector2d_magnitude(const t_2d_vector a);
+t_2d_vector vector2d_multiply(const t_2d_vector a, const t_2d_vector b);
+bool	double_epsilon_eq(double a, double b, double epsilon);
+static void line_predicate(int32_t x, int32_t y, void *private)
+{
+	object *obj = ((object*)private);
+
+	assert(obj->kind == LINE);
+	double c = obj->pos.x * obj->line.dir.x / g_univers->scaling_factor + obj->pos.y * obj->line.dir.y / g_univers->scaling_factor;
+	double a, b;
+	const double epsilon = 0.98;
+
+	a = obj->line.dir.x;
+	b = obj->line.dir.y;
+
+	double f_x = (double)x;
+	double f_y = (double)y;
+
+	f_x += g_univers->cam.x;
+	f_y += g_univers->cam.y;
+	if (double_epsilon_eq(f_x * a + b * f_y, c, epsilon))
+		pixel_put(x, y, obj->color);
+}
+
+void	draw_line(object *obj)
+{
+	t_rectangle rec = {
+		.min = {.x = 0, .y = 0},
+		.max = {.x = WINDOW_WIDTH, .y = WINDOW_HEIGHT},
+	};
+
+	rectangle_map(rec, &line_predicate, obj);
+}
+
 void	draw_object(object *obj)
 {
 
@@ -94,8 +131,12 @@ void	draw_object(object *obj)
 	case ATTRACTOR:
 		draw_circle(obj);
 		break;
+	case LINE:
+		draw_line(obj);
+		break;
 	default:
-		dprintf(2, "draw_object(): Error: Object kind is not supported.");
+		/* dprintf(2, "draw_object(): Error: Object kind is not supported."); */
+		;
 	}
 }
 
@@ -146,6 +187,15 @@ t_2d_vector vector2d_rotate(const t_2d_vector origin, const t_2d_vector a, doubl
 double		vector2d_magnitude(const t_2d_vector a)
 {
 	return sqrt(a.x * a.x + a.y * a.y);
+}
+
+t_2d_vector	vector2d_multiply(const t_2d_vector a, const t_2d_vector b)
+{
+	return (t_2d_vector){
+		.x = a.x * b.x,
+			.y = a.y * b.y,
+
+	};
 }
 
 double		vector2d_distance(const t_2d_vector a, const t_2d_vector b)
@@ -201,6 +251,8 @@ void apply_gravity(object *obj, object *attractor)
 	obj->applied_forces = vector2d_add(obj->applied_forces, vector2d_scalar_multiply(vector2d_normalize(a), f));
 }
 
+uint32_t	collisions_number = 0;
+
 void	draw_univers_hud(univers *univers)
 {
 	static char buffer[256];
@@ -208,14 +260,28 @@ void	draw_univers_hud(univers *univers)
 	snprintf(buffer, sizeof(buffer) - 1, "objects: %u", univers->nbr_objects);
 	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 100, 0xFFFFFF, buffer);
 
-	snprintf(buffer, sizeof(buffer) - 1, "pos: .x = %lf .y = %lf", univers->cam.x, univers->cam.y);
+	t_2d_vector pos = univers->objects[univers->current_follow].pos;
+	snprintf(buffer, sizeof(buffer) - 1, "pos: .x = %lf .y = %lf", pos.x, pos.y);
 	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 115, 0xFFFFFF, buffer);
+
+	pos = univers->cam;
+	snprintf(buffer, sizeof(buffer) - 1, "pos: .x = %lf .y = %lf", pos.x, pos.y);
+	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 190, 0xFFFFFF, buffer);
 
 	snprintf(buffer, sizeof(buffer) - 1, ".scaling_factor: %lf", univers->scaling_factor);
 	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 130, 0xFFFFFF, buffer);
 
 	snprintf(buffer, sizeof(buffer) - 1, ".time_ratio: %lf", univers->time_ratio);
 	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 145, 0xFFFFFF, buffer);
+
+	snprintf(buffer, sizeof(buffer) - 1, ".collisions_number: %u", collisions_number);
+	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 160, 0xFFFFFF, buffer);
+
+	if (univers->objects[univers->current_follow].kind == LINE)
+	{		snprintf(buffer, sizeof(buffer) - 1, ".type: %s", ENUM_STRING(LINE));
+	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 175, 0xFFFFFF, buffer);
+	}
+
 
 
 }
@@ -234,22 +300,71 @@ bool	circle_intersection(object *a, object *b)
 {
 	/* assert(a->kind == CIRCLE && b->kind == CIRCLE); */
 
-	double radius_a = (a->circle.radius/*  * g_univers->scaling_factor */) * (a->circle.radius/*  * g_univers->scaling_factor */);
-	double radius_b = (b->circle.radius/*  * g_univers->scaling_factor */) * (b->circle.radius/*  * g_univers->scaling_factor */);
+	/* double radius_a = (a->circle.radius/\*  * g_univers->scaling_factor *\/) * (a->circle.radius/\*  * g_univers->scaling_factor *\/); */
+	/* double radius_b = (b->circle.radius/\*  * g_univers->scaling_factor *\/) * (b->circle.radius/\*  * g_univers->scaling_factor *\/); */
 
-	double x_a = a->pos.x * a->pos.x;
-	double y_a = a->pos.y * a->pos.y;
+	/* double x_a = a->pos.x * a->pos.x; */
+	/* double y_a = a->pos.y * a->pos.y; */
 
-	double x_b = b->pos.x * b->pos.x;
-	double y_b = b->pos.y * b->pos.y;
+	/* double x_b = b->pos.x * b->pos.x; */
+	/* double y_b = b->pos.y * b->pos.y; */
 
-	double left_hand = radius_b - radius_a;
-	double right_hand = x_b - x_a + y_b - y_a;
+	/* double left_hand = radius_b - radius_a; */
+	/* double right_hand = x_b - x_a + y_b - y_a; */
 
-	double epsilon = 5e-1;
+	/* const double epsilon = 5e-1; */
 
-	return double_epsilon_eq(left_hand, right_hand, epsilon);
+	t_2d_vector total = vector2d_sub(a->pos, b->pos);
 
+	double right_hand = a->circle.radius + b->circle.radius;
+	double left_hand = vector2d_magnitude(total);
+
+	/* printf("left_hand = %lf, right_hand = %lf\n", left_hand, right_hand); */
+	return /* double_epsilon_eq(left_hand, right_hand, epsilon); */
+		right_hand >= left_hand;
+
+}
+
+bool	circle_line_intersection(object *a, object *b)
+{
+	(void)a;
+	(void)b;
+	if (b->kind == CIRCLE)
+	{
+		object *tmp = a;
+		a = b;
+		b = tmp;
+	}
+	assert(a->kind == CIRCLE);
+	assert(b->kind == LINE);
+
+	double r, _b, c, _a;
+
+	r = a->circle.radius;
+	c = vector2d_magnitude(vector2d_multiply(b->pos, b->line.dir));
+	_b = b->line.dir.y;
+	_a = b->line.dir.x;
+	double r_squared = r * r;
+
+	double delta = sqrt(r_squared * (_b * _b + _a * _a) - c * c);
+
+	const double epsilon = 1e-1;
+
+	double x1, y1, x2, y2;
+
+	if (double_epsilon_eq(delta, 0.0, epsilon)) {
+		printf("lol\n");
+		return true;
+	} else if (delta >= 0) {
+		printf("found 2 intersections\n");
+		x1 = (-_b * c + _a * delta) / (_b * _b + _a * _a);
+		x2 = (-_b * c - _a * delta) / (_b * _b + _a * _a);
+		y1 = (_a * c + _b * delta) / (_b * _b + _a * _a);
+		y2 = (_a * c - _b * delta) / (_b * _b + _a * _a);
+
+		return true;
+	}
+	return false;
 }
 
 void	apply_elapsed_time_wrapper(object *object, void *private)
@@ -262,17 +377,31 @@ void	apply_elapsed_time_wrapper(object *object, void *private)
 void	color_object(object *object, void *private)
 {
 	(void)private;
-	object->color = lerp(0.0, 10000.0, vector2d_magnitude(object->velocity), 0xFF, 0xFF0000);
+	object->color = lerp(0.0, 1000.0, vector2d_magnitude(object->velocity), 0, 0xFF) | 0xFF00;
 }
 
 void	apply_collision(object *a, object *b, void *private)
 {
 	univers *univers = private;
+	t_f_intersection	intersections[NBR_SHAPES][NBR_SHAPES] = {
+		{&circle_intersection, NULL, &circle_intersection, &circle_line_intersection, NULL},
+		{NULL, NULL, NULL, NULL, NULL},
+		{&circle_intersection, NULL, &circle_intersection, &circle_line_intersection, NULL},
+		{&circle_line_intersection, NULL, &circle_line_intersection,NULL /* &line_intersection */, NULL},
+		{NULL, NULL, NULL, NULL, NULL},
+	};
 
-	if (circle_intersection(a, b))
+	(void)univers;
+
+	if (intersections[a->kind][b->kind] == NULL) {
+		dprintf(2, "Could not apply_collision because F_intersection_(%d,%d) does not exists\n", a->kind, b->kind);
+		return ;
+	}
+	if (intersections[a->kind][b->kind](a, b))
 	{
-		a->circle.radius += b->circle.radius;
-		a->mass += b->mass;
+		collisions_number++;
+		/* a->circle.radius += b->circle.radius; */
+		/* a->mass += b->mass; */
 		/* b->circle.radius += i_r; */
 		/* b->mass += i_m; */
 
@@ -285,7 +414,7 @@ void	apply_collision(object *a, object *b, void *private)
 		/* 	univers_remove_object(univers, i); */
 		/* 	univers_remove_object(univers, u); */
 		/* } */
-		printf("There are now %u objects\n", univers->nbr_objects);
+		/* printf("There are now %u objects\n", univers->nbr_objects); */
 	}
 }
 
@@ -455,63 +584,39 @@ void	draw_trajectory(object *object)
 
 void	init_univers(univers *univers)
 {
-	static struct s_object moon = {
-		.color = 0x0100FF00,
-		.kind = CIRCLE,
+	struct s_object object =  {
+		.color = 0xFFFF,
+		.kind = LINE,
 		.pos = {
-			.x = 100,
-			.y = WINDOW_HEIGHT - 100,
+			.x = 0,
+			.y = 0,
 		},
-		.circle = {
-			.radius = 5,
+		.line = {
+			.dir = {
+				.x = 1,
+				.y = 1,
+			},
 		},
 		.velocity = {
 			.x = 0,
-			.y = -52,
+			.y = 0,
 		},
 		.acceleration = {
 			.x = 0,
 			.y = 0,
 		},
-		.mass = 1,
+		.mass = 1e10,
 		.applied_forces = {
 			.x = 0,
 			.y = 0,
 		},
 	};
 
-	static struct s_object attractor = {
-		.color = 0x00FF00,
-		.kind = ATTRACTOR,
-		.pos = {
-			.x = WINDOW_WIDTH / 2,
-			.y = WINDOW_HEIGHT / 2,
-		},
-		.velocity = {
-			.x = 0,
-			.y = 0,
-		},
-		.attractor = {
-			.radius = 100,
-		},
-		.acceleration = {
-			.x = 0,
-			.y = 0,
-		},
-		.mass = 5e16,
-		.applied_forces = {
-			.x = 0,
-			.y = 0,
-		},
-	};
-
-
-
-	univers_add_object(univers, moon);
-	univers_add_object(univers, attractor);
+	(void)object;
+	univers_add_object(univers, object);
 
 	for (uint32_t i = 0; i < DEFAULT_OBJECT_NUMBER; i++) {
-		object object = {
+		struct s_object object = {
 			.color = 0x2000FFFF,
 			.kind = CIRCLE,
 			.pos = {
@@ -541,7 +646,7 @@ void	init_univers(univers *univers)
 	univers->cam.x = 0;
 	univers->cam.y = 0;
 	univers->scaling_factor = BASE_SCALING_FACTOR;
-	univers->time_ratio = 1;
+	/* univers->time_ratio = 1; */
 }
 
 int	draw_stuff()
@@ -558,6 +663,7 @@ int	draw_stuff()
 		},
 		.scaling_factor = BASE_SCALING_FACTOR,
 		.time_ratio = 1,
+		.current_follow = 0,
 	};
 
 
@@ -578,8 +684,8 @@ int	draw_stuff()
 	if (new - old < CLOCK_FRAME_DELTA)
 		return 0;
 	g_univers->cam = g_univers->objects[g_univers->current_follow].pos;
-	g_univers->cam.x -= WINDOW_WIDTH / 2;
-	g_univers->cam.y -= WINDOW_HEIGHT / 2;
+	g_univers->cam.x -= (WINDOW_WIDTH / (2 * g_univers->scaling_factor));
+	g_univers->cam.y -= (WINDOW_HEIGHT / (2 * g_univers->scaling_factor));
 	draw_univers(&univers);
 	draw_trajectory(&univers.objects[univers.current_follow]);
 	mlx_put_image_to_window(g_mlx_data.connector, g_mlx_data.win, g_frame.frame, 0, 0);
@@ -620,7 +726,10 @@ int	main(int argc, char **argv)
 					, mlx_data.win, frames, NULL, NULL});
 		mlx_loop_hook(mlx_data.connector, &draw_stuff, NULL);
 		mlx_hook(mlx_data.win, BUTTONPRESS, BUTTONPRESSMASK, &ft_handler_mouse
-		, NULL);
+				 , NULL);
+		mlx_hook(mlx_data.win, MOTIONNOTIFY, 0, &ft_handler_mouse_motion
+				 , NULL);
+
 		mlx_loop(mlx_data.connector);
 	}
 }

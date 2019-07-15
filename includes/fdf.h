@@ -50,10 +50,12 @@ typedef void* t_mlx_ptr;
 
 # define STDIN_NOFILE 0
 # define GRAVITATIONAL_CONSTANT (6.674 / 100000000000.0)
-# define BASE_SCALING_FACTOR 0.03
-# define DEFAULT_OBJECT_NUMBER 300
+# define BASE_SCALING_FACTOR /* 0.03 */ 1
+# define DEFAULT_OBJECT_NUMBER 100
 
 # define ABS(x) (x < 0 ? -x : x)
+
+# define ENUM_STRING(x) (#x)
 
 typedef struct	s_color_set
 {
@@ -130,16 +132,6 @@ typedef struct	s_quat
 	double	w;
 }				t_quat;
 
-typedef struct	s_line
-{
-	t_vec	start;
-	t_vec	end;
-	double	dx;
-	double	dy;
-	double	e;
-	t_point *point_1;
-	t_point *point_2;
-}				t_line;
 
 typedef struct s_2d_vector
 {
@@ -160,14 +152,23 @@ typedef struct	s_circle
 	double		radius;
 }				t_circle;
 
+typedef struct	s_line
+{
+	t_2d_vector	dir;
+}				t_line;
+
 
 typedef uint32_t	t_color;
 typedef enum	s_shape_kind {
 	CIRCLE,
 	RECTANGLE,
 	ATTRACTOR,
+	LINE,
 	NONE,
+	__SHAPE_KIND_VARIANTS_NBR,
 }				shape_kind;
+
+# define NBR_SHAPES __SHAPE_KIND_VARIANTS_NBR
 
 typedef struct s_object {
 	t_color			color;
@@ -176,12 +177,15 @@ typedef struct s_object {
 	union {
 		t_circle	circle;
 		t_circle	attractor;
+		t_line		line;
 	};
 	t_2d_vector		velocity;
 	t_2d_vector		acceleration;
 	double			mass;
 	t_2d_vector		applied_forces;
 }				object;
+
+typedef bool (*t_f_intersection)(object *a, object *b);
 
 typedef struct	s_univers {
 	uint32_t	nbr_objects;
@@ -301,6 +305,7 @@ void			ft_handler_r(void *param);
 void			ft_handler_m(void *param);
 void			ft_handler_left(void *param);
 void			ft_handler_right(void *param);
+int			   	ft_handler_mouse_motion(int x, int y, void *param);
 
 /*
 ** Quaternions

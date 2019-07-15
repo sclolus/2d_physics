@@ -11,12 +11,3 @@
 /* ************************************************************************** */
 
 #include "fdf.h"
-
-void	ft_handler_e(void *param)
-{
-	ft_quat_rotate_points(&(t_vec){0, 0, 1}, -ROTATION_SPEED * PI / 180
-						, (t_mem_block*)((t_mem_block**)param)[3]);
-	ft_draw_lines(((t_mlx_ptr)((char**)param)[0]), (t_mlx_ptr)((char**)param)[1]
-				, (t_mlx_img)((char**)param)[2]
-				, (t_mem_block*)((t_mem_block**)param)[3]);
-}
