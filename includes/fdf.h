@@ -51,7 +51,7 @@ typedef void* t_mlx_ptr;
 # define STDIN_NOFILE 0
 # define GRAVITATIONAL_CONSTANT (6.674 / 100000000000.0)
 # define BASE_SCALING_FACTOR /* 0.03 */ 1
-# define DEFAULT_OBJECT_NUMBER 100
+# define DEFAULT_OBJECT_NUMBER 1
 
 # define ABS(x) (x < 0 ? -x : x)
 

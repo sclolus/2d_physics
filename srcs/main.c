@@ -51,8 +51,8 @@ static void	circle_predicate(int32_t x, int32_t y, void *private)
 	double f_x = (double)x / (scaling_factor) + g_univers->cam.x;
 	double f_y = (double)y / (scaling_factor) + g_univers->cam.y;
 
-	double dx = (f_x - obj->pos.x);
-	double dy = (f_y - obj->pos.y);
+	double dx = (obj->pos.x - f_x);
+	double dy = (obj->pos.y - f_y);
 
 	if (sqrt(dx * dx + dy * dy) <= obj->circle.radius) {
 		pixel_put(x, y, obj->color);
@@ -61,12 +61,12 @@ static void	circle_predicate(int32_t x, int32_t y, void *private)
 
 void	draw_circle(object *obj)
 {
-	int32_t min_x, min_y;
-	int32_t max_x, max_y;
+	double min_x, min_y;
+	double max_x, max_y;
 
 	assert(obj->kind == CIRCLE || obj->kind == ATTRACTOR);
 
-	int32_t delta = obj->circle.radius * g_univers->scaling_factor;
+	double delta = obj->circle.radius * g_univers->scaling_factor;
 	min_x = obj->pos.x - delta - g_univers->cam.x;
 	min_y = obj->pos.y - delta - g_univers->cam.y;
 	max_x = obj->pos.x + delta - g_univers->cam.x;
@@ -74,14 +74,16 @@ void	draw_circle(object *obj)
 
 	t_rectangle	rec = {
 		.min = {
-			.x = clamp(min_x, 0, WINDOW_WIDTH) /* 0 */,
-			.y = clamp(min_y, 0, WINDOW_HEIGHT) /* 0 */,
+			.x = 0/* clamp(min_x, 0, WINDOW_WIDTH) */,
+			.y = 0/* clamp(min_y, 0, WINDOW_HEIGHT) */ /* 0 */,
 		},
 		.max = {
-			.x = clamp(max_x, 0, WINDOW_WIDTH)/* WINDOW_WIDTH */,
-			.y = clamp(max_y, 0, WINDOW_HEIGHT) /* WINDOW_HEIGHT */,
+			.x = WINDOW_WIDTH/* clamp(max_x, 0, WINDOW_WIDTH) *//* WINDOW_WIDTH */,
+			.y = WINDOW_HEIGHT/* clamp(max_y, 0, WINDOW_HEIGHT) */ /* WINDOW_HEIGHT */, //fix this bullshit
 		},
 	};
+	/* printf("object is in (%lf, %lf) relative to the camera\n", obj->pos.x - g_univers->cam.x, obj->pos.y - g_univers->cam.y); */
+	/* printf(".min.x  = %lf, y = %lf .max = %lf, .y = %lf\n", rec.min.x, rec.min.y, rec.max.x, rec.max.y); */
 	rectangle_map(rec, &circle_predicate, obj);
 }
 
@@ -613,7 +615,7 @@ void	init_univers(univers *univers)
 	};
 
 	(void)object;
-	univers_add_object(univers, object);
+	/* univers_add_object(univers, object); */
 
 	for (uint32_t i = 0; i < DEFAULT_OBJECT_NUMBER; i++) {
 		struct s_object object = {
@@ -628,7 +630,7 @@ void	init_univers(univers *univers)
 			},
 			.velocity = {
 				.x = 0,
-				.y = -52,
+				.y = 0,
 			},
 			.acceleration = {
 				.x = 0,
@@ -684,8 +686,8 @@ int	draw_stuff()
 	if (new - old < CLOCK_FRAME_DELTA)
 		return 0;
 	g_univers->cam = g_univers->objects[g_univers->current_follow].pos;
-	g_univers->cam.x -= (WINDOW_WIDTH / (2 * g_univers->scaling_factor));
-	g_univers->cam.y -= (WINDOW_HEIGHT / (2 * g_univers->scaling_factor));
+	g_univers->cam.x -= ((float)WINDOW_WIDTH / (g_univers->scaling_factor * 2.0));
+	g_univers->cam.y -= ((float)WINDOW_HEIGHT / (g_univers->scaling_factor * 2.0));
 	draw_univers(&univers);
 	draw_trajectory(&univers.objects[univers.current_follow]);
 	mlx_put_image_to_window(g_mlx_data.connector, g_mlx_data.win, g_frame.frame, 0, 0);
