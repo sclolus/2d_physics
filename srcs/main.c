@@ -54,9 +54,8 @@ static void	circle_predicate(int32_t x, int32_t y, void *private)
 	double dx = (obj->pos.x - f_x);
 	double dy = (obj->pos.y - f_y);
 
-	if (sqrt(dx * dx + dy * dy) <= obj->circle.radius) {
+	if (dx * dx + dy * dy <= obj->circle.radius * obj->circle.radius)
 		pixel_put(x, y, obj->color);
-	}
 }
 
 void	draw_circle(object *obj)
@@ -66,24 +65,32 @@ void	draw_circle(object *obj)
 
 	assert(obj->kind == CIRCLE || obj->kind == ATTRACTOR);
 
-	double delta = obj->circle.radius * g_univers->scaling_factor;
+	double scaling_factor = g_univers->scaling_factor;
+	double delta = obj->circle.radius;
 	min_x = obj->pos.x - delta - g_univers->cam.x;
 	min_y = obj->pos.y - delta - g_univers->cam.y;
 	max_x = obj->pos.x + delta - g_univers->cam.x;
 	max_y = obj->pos.y + delta - g_univers->cam.y;
 
+	min_x *= scaling_factor;
+	min_y *= scaling_factor;
+	max_x *= scaling_factor;
+	max_y *= scaling_factor;
+
 	t_rectangle	rec = {
 		.min = {
-			.x = 0/* clamp(min_x, 0, WINDOW_WIDTH) */,
-			.y = 0/* clamp(min_y, 0, WINDOW_HEIGHT) */ /* 0 */,
+			.x = clamp(min_x, 0, WINDOW_WIDTH),
+			.y = clamp(min_y, 0, WINDOW_HEIGHT),
 		},
 		.max = {
-			.x = WINDOW_WIDTH/* clamp(max_x, 0, WINDOW_WIDTH) *//* WINDOW_WIDTH */,
-			.y = WINDOW_HEIGHT/* clamp(max_y, 0, WINDOW_HEIGHT) */ /* WINDOW_HEIGHT */, //fix this bullshit
+			.x = clamp(max_x, 0, WINDOW_WIDTH),
+			.y = clamp(max_y, 0, WINDOW_HEIGHT),
 		},
 	};
+	/* printf("object is in (%lf, %lf)\n", obj->pos.x, obj->pos.y); */
 	/* printf("object is in (%lf, %lf) relative to the camera\n", obj->pos.x - g_univers->cam.x, obj->pos.y - g_univers->cam.y); */
-	/* printf(".min.x  = %lf, y = %lf .max = %lf, .y = %lf\n", rec.min.x, rec.min.y, rec.max.x, rec.max.y); */
+	/* printf("after  clamping .min.x  = %lf, y = %lf .max = %lf, .y = %lf\n", test.min.x, test.min.y, test.max.x, test.max.y); */
+
 	rectangle_map(rec, &circle_predicate, obj);
 }
 
@@ -379,7 +386,7 @@ void	apply_elapsed_time_wrapper(object *object, void *private)
 void	color_object(object *object, void *private)
 {
 	(void)private;
-	object->color = lerp(0.0, 1000.0, vector2d_magnitude(object->velocity), 0, 0xFF) | 0xFF00;
+	object->color = lerp(0.0, 100.0, vector2d_magnitude(object->velocity), 0, 0xFF) | 0xFF00;
 }
 
 void	apply_collision(object *a, object *b, void *private)
@@ -622,8 +629,8 @@ void	init_univers(univers *univers)
 			.color = 0x2000FFFF,
 			.kind = CIRCLE,
 			.pos = {
-				.x = rand() % WINDOW_WIDTH,
-				.y = rand() % WINDOW_HEIGHT,
+				.x = rand() % (int32_t)(WINDOW_WIDTH / BASE_SCALING_FACTOR),
+				.y = rand() % (int32_t)(WINDOW_HEIGHT / BASE_SCALING_FACTOR),
 			},
 			.circle = {
 				.radius = 10 + (i * 2) % 60,
@@ -636,7 +643,7 @@ void	init_univers(univers *univers)
 				.x = 0,
 				.y = 0,
 			},
-			.mass = 1e16,
+			.mass = 1e18,
 			.applied_forces = {
 				.x = 0,
 				.y = 0,
@@ -645,6 +652,7 @@ void	init_univers(univers *univers)
 		univers_add_object(univers, object);
 	}
 
+	collisions_number = 0;
 	univers->cam.x = 0;
 	univers->cam.y = 0;
 	univers->scaling_factor = BASE_SCALING_FACTOR;
