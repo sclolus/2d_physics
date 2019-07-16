@@ -15,5 +15,5 @@
 void	ft_handler_pad_down(void *param)
 {
 	(void)param;
-	g_univers->scaling_factor /= 2;
+	g_univers->scaling_factor /= SCALING_FACTOR_FACTOR;
 }

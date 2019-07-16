@@ -103,19 +103,23 @@ static void line_predicate(int32_t x, int32_t y, void *private)
 	object *obj = ((object*)private);
 
 	assert(obj->kind == LINE);
-	double c = obj->pos.x * obj->line.dir.x / g_univers->scaling_factor + obj->pos.y * obj->line.dir.y / g_univers->scaling_factor;
+	double c = obj->pos.x * obj->line.dir.x + obj->pos.y * obj->line.dir.y;
 	double a, b;
-	const double epsilon = 0.98;
+	const double scaling_factor = g_univers->scaling_factor;
+	const double epsilon = clamp(1 / scaling_factor, 0.0, 1);
 
 	a = obj->line.dir.x;
 	b = obj->line.dir.y;
 
-	double f_x = (double)x;
-	double f_y = (double)y;
+	double f_x = (double)x / scaling_factor;
+	double f_y = (double)y / scaling_factor;
 
 	f_x += g_univers->cam.x;
 	f_y += g_univers->cam.y;
-	if (double_epsilon_eq(f_x * a + b * f_y, c, epsilon))
+
+	/* f_x *= scaling_factor; */
+	/* f_y *= scaling_factor; */
+	if (double_epsilon_eq((/* obj->pos.x -  */f_x) * a + b * (/* obj->pos.y -  */f_y), c, epsilon))
 		pixel_put(x, y, obj->color);
 }
 
@@ -308,7 +312,6 @@ bool	double_epsilon_eq(double a, double b, double epsilon)
 bool	circle_intersection(object *a, object *b)
 {
 	/* assert(a->kind == CIRCLE && b->kind == CIRCLE); */
-
 	/* double radius_a = (a->circle.radius/\*  * g_univers->scaling_factor *\/) * (a->circle.radius/\*  * g_univers->scaling_factor *\/); */
 	/* double radius_b = (b->circle.radius/\*  * g_univers->scaling_factor *\/) * (b->circle.radius/\*  * g_univers->scaling_factor *\/); */
 
@@ -334,43 +337,42 @@ bool	circle_intersection(object *a, object *b)
 
 }
 
-bool	circle_line_intersection(object *a, object *b)
+bool	circle_line_intersection(object *circle, object *line/* , uint32_t *intersection_number, t_2d_vector *intersections */)
 {
-	(void)a;
-	(void)b;
-	if (b->kind == CIRCLE)
+	(void)circle;
+	(void)line;
+	if (line->kind == CIRCLE)
 	{
-		object *tmp = a;
-		a = b;
-		b = tmp;
+		object *tmp = circle;
+		circle = line;
+		line = tmp;
 	}
-	assert(a->kind == CIRCLE);
-	assert(b->kind == LINE);
+	assert(circle->kind == CIRCLE);
+	assert(line->kind == LINE);
 
-	double r, _b, c, _a;
+	double r, b, c, a;
 
-	r = a->circle.radius;
-	c = vector2d_magnitude(vector2d_multiply(b->pos, b->line.dir));
-	_b = b->line.dir.y;
-	_a = b->line.dir.x;
+	r = circle->circle.radius;
+	a = line->line.dir.x;
+	b = line->line.dir.y;
+	c = line->pos.x * a + line->pos.y * b - a * circle->pos.x - b * circle->pos.y;
 	double r_squared = r * r;
 
-	double delta = sqrt(r_squared * (_b * _b + _a * _a) - c * c);
+	double delta = r_squared * (b * b + a * a) - c * c;
 
-	const double epsilon = 1e-1;
+	const double epsilon = 1e-10;
 
 	double x1, y1, x2, y2;
 
 	if (double_epsilon_eq(delta, 0.0, epsilon)) {
-		printf("lol\n");
+		x1 = a * c / (a * a + b * b);
+		x1 = b * c / (a * a + b * b);
 		return true;
-	} else if (delta >= 0) {
-		printf("found 2 intersections\n");
-		x1 = (-_b * c + _a * delta) / (_b * _b + _a * _a);
-		x2 = (-_b * c - _a * delta) / (_b * _b + _a * _a);
-		y1 = (_a * c + _b * delta) / (_b * _b + _a * _a);
-		y2 = (_a * c - _b * delta) / (_b * _b + _a * _a);
-
+	} else if (delta > 0.0) {
+		x1 = (a * c + b * sqrt(delta)) / (b * b + a * a);
+		x2 = (a * c - b * sqrt(delta)) / (b * b + a * a);
+		y1 = (b * c + a * sqrt(delta)) / (b * b + a * a);
+		y2 = (b * c - a * sqrt(delta)) / (b * b + a * a);
 		return true;
 	}
 	return false;
@@ -408,6 +410,8 @@ void	apply_collision(object *a, object *b, void *private)
 	}
 	if (intersections[a->kind][b->kind](a, b))
 	{
+		/* g_univers->time_ratio = 0; */
+
 		collisions_number++;
 		/* a->circle.radius += b->circle.radius; */
 		/* a->mass += b->mass; */
@@ -597,13 +601,13 @@ void	init_univers(univers *univers)
 		.color = 0xFFFF,
 		.kind = LINE,
 		.pos = {
-			.x = 0,
-			.y = 0,
+			.x = -1,
+			.y = -1,
 		},
 		.line = {
 			.dir = {
 				.x = 1,
-				.y = 1,
+				.y = -1,
 			},
 		},
 		.velocity = {
@@ -622,7 +626,7 @@ void	init_univers(univers *univers)
 	};
 
 	(void)object;
-	/* univers_add_object(univers, object); */
+	univers_add_object(univers, object);
 
 	for (uint32_t i = 0; i < DEFAULT_OBJECT_NUMBER; i++) {
 		struct s_object object = {

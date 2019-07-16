@@ -15,5 +15,8 @@
 void	ft_handler_right(void *param)
 {
 	(void)param;
+	if (g_univers->time_ratio == 0) {
+		g_univers->time_ratio = 0.05;
+	}
 	g_univers->time_ratio *= 2.0;
 }
