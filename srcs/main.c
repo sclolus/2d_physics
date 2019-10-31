@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/25 16:54:59 by sclolus           #+#    #+#             */
-/*   Updated: 2017/08/17 04:02:22 by sclolus          ###   ########.fr       */
+/*   Updated: 2019/10/31 04:40:33 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,17 +28,61 @@ void	rectangle_map(t_rectangle rec, void (*lambda)(int32_t x, int32_t y, void *p
 
 	for (int32_t y = min_y; y <= max_y; y++) {
 		for (int32_t x = min_x; x <= max_x; x++) {
-
 			lambda(x, y, private);
 		}
 	}
 }
 
+bool		symetry_on = true;
+t_2d_vector	symetry_axis = {
+	.x = (double)WINDOW_WIDTH,
+	.y = (double)WINDOW_HEIGHT,
+};
+
+t_2d_vector symetry_point = {
+	.x = WINDOW_WIDTH,
+	.y = WINDOW_HEIGHT,
+};
+
+uint8_t	g_global_alpha = 256 / 2;
+/* t_2d_vector	defining_point = ; */
+
 inline __attribute__((always_inline)) void pixel_put(int32_t x, int32_t y, uint32_t color)
 {
-	if (x >= 0 && y >= 0
-		&& x < WINDOW_WIDTH && y < WINDOW_HEIGHT)
-		((uint32_t *)(g_frame.buffer))[x + y * WINDOW_WIDTH] = color;
+	if (1) {
+		double	x_f = (double)x;
+		double	y_f = (double)y;
+
+		t_2d_vector pixel_pos = vector2d_new(x_f, y_f);
+
+		/* t_2d_vector reflected_point = vector2d_add(vector2d_reflect(vector2d_sub(pixel_pos, symetry_point), symetry_axis), symetry_point); */
+		t_2d_vector screen_center = (t_2d_vector) {
+			.x = WINDOW_WIDTH / 2,
+			.y = WINDOW_HEIGHT / 2,
+		};
+
+		uint32_t	alpha_mask = (uint32_t)g_global_alpha << 24;
+		t_2d_vector	reflected_point = vector2d_point_symetry(pixel_pos, screen_center);
+		if (symetry_on) {
+			int32_t	projected_x = (int32_t) (reflected_point.x);
+			int32_t	projected_y = (int32_t) (reflected_point.y);
+
+			if (!(projected_x >= 0 && projected_y >= 0
+				  && projected_x < WINDOW_WIDTH && projected_y < WINDOW_HEIGHT)) {
+				/* if (x < 10 && y < 10) { */
+					/* warn("Reflected point is outside of window: .x = %d, .y = %d, orignal_point: .x = %d, .y = %d", projected_x, projected_y, x, y); */
+				/* } */
+			} else {
+				((uint32_t *)(g_frame.buffer))[projected_x + projected_y * WINDOW_WIDTH] = ((~0xff000000 & ~color) | alpha_mask) | 0xFF0000;
+			}
+		}
+
+		if (x >= 0 && y >= 0
+			&& x < WINDOW_WIDTH && y < WINDOW_HEIGHT) {
+			((uint32_t *)(g_frame.buffer))[x + y * WINDOW_WIDTH] = color | alpha_mask;
+		}
+	}
+
 }
 
 static void	circle_predicate(int32_t x, int32_t y, void *private)
@@ -79,12 +123,12 @@ void	draw_circle(object *obj)
 
 	t_rectangle	rec = {
 		.min = {
-			.x = clamp(min_x, 0, WINDOW_WIDTH),
-			.y = clamp(min_y, 0, WINDOW_HEIGHT),
+			.x = /* clamp( */min_x/* , 0, WINDOW_WIDTH) */,
+			.y = /* clamp( */min_y/* , 0, WINDOW_HEIGHT) */,
 		},
 		.max = {
-			.x = clamp(max_x, 0, WINDOW_WIDTH),
-			.y = clamp(max_y, 0, WINDOW_HEIGHT),
+			.x = /* clamp( */max_x/* , 0, WINDOW_WIDTH) */,
+			.y = /* clamp( */max_y/* , 0, WINDOW_HEIGHT) */,
 		},
 	};
 	/* printf("object is in (%lf, %lf)\n", obj->pos.x, obj->pos.y); */
@@ -153,6 +197,13 @@ void	draw_object(object *obj)
 	}
 }
 
+t_2d_vector vector2d_new(const double x, const double y)
+{
+	return (t_2d_vector){
+		.x = x,
+			.y = y,
+	};
+}
 
 t_2d_vector	vector2d_add(const t_2d_vector a, const t_2d_vector b)
 {
@@ -180,11 +231,15 @@ t_2d_vector vector2d_scalar_multiply(const t_2d_vector a, double scalar)
 
 t_2d_vector vector2d_scalar_divide(const t_2d_vector a, double scalar)
 {
-	return vector2d_scalar_multiply(a, 1.0 / scalar);
+	/* return vector2d_scalar_multiply(a, 1.0 / scalar); */
+	return (t_2d_vector) {
+		.x = a.x / scalar,
+			.y = a.y / scalar,
+			};
 }
 
 
-t_2d_vector vector2d_rotate(const t_2d_vector origin, const t_2d_vector a, double angle)
+t_2d_vector vector2d_rotate(const t_2d_vector a, const t_2d_vector origin, const double angle)
 {
 	t_2d_vector vec = vector2d_sub(a, origin);
 
@@ -211,6 +266,11 @@ t_2d_vector	vector2d_multiply(const t_2d_vector a, const t_2d_vector b)
 	};
 }
 
+double		vector2d_dot_product(const t_2d_vector a, const t_2d_vector b)
+{
+	return a.x * b.x + b.y * a.y;
+}
+
 double		vector2d_distance(const t_2d_vector a, const t_2d_vector b)
 {
 	double dx = b.x - a.x;
@@ -223,6 +283,54 @@ t_2d_vector vector2d_normalize(const t_2d_vector a)
 {
 	return vector2d_scalar_divide(a, vector2d_magnitude(a));
 }
+
+t_2d_vector vector2d_project(const t_2d_vector a, const t_2d_vector projection_axis)
+{
+	const t_2d_vector normalized_projection_axis = vector2d_normalize(projection_axis);
+
+	return vector2d_scalar_multiply(normalized_projection_axis, vector2d_dot_product(a, normalized_projection_axis));
+}
+
+t_2d_vector vector2d_reflect(const t_2d_vector a, const t_2d_vector reflection_axis)
+{
+	const t_2d_vector	projected_vector = vector2d_project(a, reflection_axis);
+
+	const t_2d_vector	reflected_point = vector2d_sub(vector2d_scalar_multiply(projected_vector, 2.0), a);
+
+	return reflected_point;
+}
+
+t_2d_vector	vector2d_point_symetry(const t_2d_vector point, const t_2d_vector point_of_symetry)
+{
+	t_2d_vector	translation_vector = vector2d_scalar_multiply(vector2d_sub(point_of_symetry, point), 2.0);
+
+	return vector2d_add(point, translation_vector);
+}
+
+t_2d_vector	vector2d_slide_scalar(const t_2d_vector point, const t_2d_vector sliding_axis, const double scalar)
+{
+	t_2d_vector	negative_projection = vector2d_scalar_multiply(vector2d_project(point, sliding_axis), -1 * scalar);
+
+	return vector2d_add(negative_projection, point);
+}
+
+t_2d_vector	vector2d_slide(const t_2d_vector point, const t_2d_vector sliding_axis)
+{
+	return vector2d_slide_scalar(point, sliding_axis, 1);
+}
+
+
+/* t_2d_vector	vector2d_rotate(const t_2d_vector point, const t_2d_vector rotation_point, const double angle) */
+/* { */
+/* 	t_2d_vector	point_relative_to_rotation_point = vector2d_sub(point, rotation_point); */
+/* 	double		point_rotation_distance = vector2d_magnitude(point_relative_to_rotation_point); */
+
+/* 	t_2d_vector rotated_point_relative_to_rotation_point = vector2d_new(cos(angle) * point_rotation_distance, sin(angle) * point_rotation_distance); */
+
+/* 	t_2d_vector rotated_point = vector2d_add(rotated_point_relative_to_rotation_point, rotation_point); */
+
+/* 	return rotated_point; */
+/* } */
 
 void	apply_velocity(object *obj, double elapsed_time)
 {
@@ -290,6 +398,9 @@ void	draw_univers_hud(univers *univers)
 	snprintf(buffer, sizeof(buffer) - 1, ".collisions_number: %u", collisions_number);
 	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 160, 0xFFFFFF, buffer);
 
+	snprintf(buffer, sizeof(buffer) - 1, ".alpha: %hhx", g_global_alpha);
+	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 175, 0xFFFFFF, buffer);
+
 	if (univers->objects[univers->current_follow].kind == LINE)
 	{		snprintf(buffer, sizeof(buffer) - 1, ".type: %s", ENUM_STRING(LINE));
 	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 175, 0xFFFFFF, buffer);
@@ -347,7 +458,7 @@ bool	circle_line_intersection(object *circle, object *line/* , uint32_t *interse
 		circle = line;
 		line = tmp;
 	}
-	assert(circle->kind == CIRCLE);
+	assert(circle->kind == CIRCLE || circle->kind == ATTRACTOR);
 	assert(line->kind == LINE);
 
 	double r, b, c, a;
@@ -433,6 +544,12 @@ void	apply_collision(object *a, object *b, void *private)
 
 void	univers_apply_elapsed_time(univers *univers, double elapsed_time)
 {
+	const double	angle = ROTATIONS_PER_SEC * (elapsed_time / g_univers->time_ratio);
+	t_2d_vector	screen_center = vector2d_new((double)WINDOW_WIDTH / 2.0, (double)WINDOW_HEIGHT / 2.0);
+	symetry_point = vector2d_rotate(symetry_point, screen_center, angle);
+	symetry_axis = vector2d_sub(symetry_point, screen_center);
+
+
 	univers_map_objects(univers, &apply_elapsed_time_wrapper, &elapsed_time);
 	univers_map_objects(univers, &color_object, NULL);
 	univers_map_2d_objects(univers, &apply_collision, univers);
@@ -461,7 +578,6 @@ void	univers_map_objects(univers *univers, void (*lambda)(object *obj, void *pri
 	}
 }
 
-
 void univers_map_2d_objects(univers *univers, void (*lambda)(object *a, object *b, void *private), void *private)
 {
 	uint32_t	i = 0;
@@ -488,6 +604,29 @@ void	object_reset_forces(object *object, void *private)
 	object->acceleration = (t_2d_vector){ 0, 0 };
 	object->applied_forces = (t_2d_vector){ 0, 0 };
 
+}
+
+struct	folding_rotation {
+	double	angle;
+	object	*previous_object;
+};
+
+void	objects_folding_rotation(object *object, void *private)
+{
+	assert(private);
+
+	struct folding_rotation	*rotation = (struct folding_rotation*)private;
+
+	t_2d_vector	center_of_rotation;
+
+	if (!rotation->previous_object) {
+		center_of_rotation = vector2d_new(0, 0);
+	} else {
+		center_of_rotation = rotation->previous_object->pos;
+	}
+
+	object->pos = vector2d_rotate(object->pos, center_of_rotation, rotation->angle);
+	rotation->previous_object = object;
 }
 
 void	apply_gravity_wrapper(object *a, object *b, void *private)
@@ -626,15 +765,17 @@ void	init_univers(univers *univers)
 	};
 
 	(void)object;
-	univers_add_object(univers, object);
+	/* univers_add_object(univers, object); */
 
 	for (uint32_t i = 0; i < DEFAULT_OBJECT_NUMBER; i++) {
 		struct s_object object = {
 			.color = 0x2000FFFF,
 			.kind = CIRCLE,
 			.pos = {
-				.x = rand() % (int32_t)(WINDOW_WIDTH / BASE_SCALING_FACTOR),
-				.y = rand() % (int32_t)(WINDOW_HEIGHT / BASE_SCALING_FACTOR),
+				.x = rand() % (int32_t)(WINDOW_WIDTH / BASE_SCALING_FACTOR * 5),
+				.y = rand() % (int32_t)(WINDOW_HEIGHT / BASE_SCALING_FACTOR * 5),
+				/* .x = 0 + rand() % 2, */
+				/* .y = 0 + rand() % 2, */
 			},
 			.circle = {
 				.radius = 10 + (i * 2) % 60,
@@ -691,9 +832,18 @@ int	draw_stuff()
 	new = clock();
 	double elapsed_time = (double)(new - last_time) / (double)CLOCKS_PER_SEC * g_univers->time_ratio;
 
+	/* const double	angle = ROTATIONS_PER_SEC * (elapsed_time * g_univers->time_ratio); */
+	/* struct folding_rotation rotation = { */
+	/* 	.angle = angle, */
+	/* }; */
+
+	/* univers_map_objects(g_univers, &objects_folding_rotation, (void *)&rotation); */
+
 	univers_apply_elapsed_time(&univers, elapsed_time);
 	univers_apply_gravity(&univers);
 	univers_apply_acceleration(&univers);
+
+	(void)elapsed_time;
 	last_time = new;
 	if (new - old < CLOCK_FRAME_DELTA)
 		return 0;

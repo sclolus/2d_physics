@@ -1,14 +1,11 @@
-NAME= fdf
+NAME= physics
 SRC= srcs/main.c \
-	srcs/ft_parse_file.c \
-	srcs/ft_parse_color.c \
 	srcs/ft_create_mem_block.c \
 	srcs/ft_mem_block_push_back_elem.c \
 	srcs/ft_get_image_frames.c \
 	srcs/ft_pthread_frame_clear_routine.c \
 	srcs/ft_claim_frame.c \
 	srcs/ft_pthread_wait_drawing_threads.c \
-	srcs/ft_set_3d.c \
 	srcs/ft_set_mlx_hooks.c \
 	srcs/ft_handler_keys.c \
 	srcs/ft_handler_mouse.c \
@@ -22,26 +19,31 @@ SRC= srcs/main.c \
 	srcs/ft_handler_q.c \
 	srcs/ft_handler_e.c \
 	srcs/ft_handler_a.c \
+	srcs/ft_handler_alpha.c \
 	srcs/ft_handler_d.c \
 	srcs/ft_handler_s.c \
 	srcs/ft_handler_w.c \
+	srcs/ft_handler_symetry.c \
 	srcs/ft_handler_mouse_motion.c \
 	srcs/ft_get_reduction_coefficient.c \
 	srcs/ft_get_perspective_angle.c \
 	srcs/ft_get_lerp.c
 
-	# srcs/quaternions/ft_get_conjugate_quat.c \
-	# srcs/quaternions/ft_get_quat_magnitude.c \
-	# srcs/quaternions/ft_multiply_quat.c \
-	# srcs/quaternions/ft_normalize_quat.c \
-	# srcs/quaternions/ft_quat_rotate_points.c \
+# srcs/ft_set_3d.c \
+# srcs/ft_parse_file.c \
+# srcs/ft_parse_color.c \
+# srcs/quaternions/ft_get_conjugate_quat.c \
+# srcs/quaternions/ft_get_quat_magnitude.c \
+# srcs/quaternions/ft_multiply_quat.c \
+# srcs/quaternions/ft_normalize_quat.c \
+# srcs/quaternions/ft_quat_rotate_points.c \
 
 
 HDRS= includes/fdf.h
 OBJ= $(SRC:.c=.o)
 HDR_PATH= ./libft/includes/
 CC= gcc
-CC_FLAGS= -v -Ofast -Wall -Werror -Wextra  # -g3 -fsanitize=address -fsanitize-blacklist=my_ignores.txt
+CC_FLAGS= -v -Ofast -march=native -Wall -Werror -Wextra  # -g3 -fsanitize=address -fsanitize-blacklist=my_ignores.txt
 MLX_PATH=./minilibx_macos/
 LIBFT_PATH=./libft/
 FLAGS= -L$(MLX_PATH) -lmlx -L$(LIBFT_PATH) -lft -I$(HDR_PATH) -I./includes -I$(MLX_PATH) -framework OpenGL -framework AppKit

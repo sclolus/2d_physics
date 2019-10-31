@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/25 16:55:51 by sclolus           #+#    #+#             */
-/*   Updated: 2017/08/17 03:56:34 by sclolus          ###   ########.fr       */
+/*   Updated: 2019/10/31 05:06:40 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,9 @@ typedef void* t_mlx_win;
 typedef void* t_mlx_img;
 typedef void* t_mlx_ptr;
 
-# define WINDOW_NAME "fdf"
+# define BIN_NAME "2d_physics"
+
+# define WINDOW_NAME BIN_NAME
 # define WINDOW_WIDTH 1920
 # define WINDOW_HEIGHT 1080
 
@@ -51,7 +53,7 @@ typedef void* t_mlx_ptr;
 # define STDIN_NOFILE 0
 # define GRAVITATIONAL_CONSTANT (6.674 / 100000000000.0)
 # define BASE_SCALING_FACTOR 1
-# define DEFAULT_OBJECT_NUMBER 100
+# define DEFAULT_OBJECT_NUMBER 1000
 # define SCALING_FACTOR_FACTOR 1.3
 
 # define ABS(x) (x < 0 ? -x : x)
@@ -140,7 +142,20 @@ typedef struct s_2d_vector
 	double	y;
 }			   t_2d_vector;
 
+t_2d_vector vector2d_new(const double x, const double y);
+t_2d_vector	vector2d_add(const t_2d_vector a, const t_2d_vector b);
+t_2d_vector vector2d_sub(const t_2d_vector a, const t_2d_vector b);
+t_2d_vector vector2d_scalar_multiply(const t_2d_vector a, double scalar);
+t_2d_vector vector2d_scalar_divide(const t_2d_vector a, double scalar);
+t_2d_vector vector2d_rotate(const t_2d_vector origin, const t_2d_vector a, double angle);
+double		vector2d_magnitude(const t_2d_vector a);
+t_2d_vector	vector2d_multiply(const t_2d_vector a, const t_2d_vector b);
+double		vector2d_dot_product(const t_2d_vector a, const t_2d_vector b);
 double		vector2d_distance(const t_2d_vector a, const t_2d_vector b);
+t_2d_vector vector2d_normalize(const t_2d_vector a);
+t_2d_vector vector2d_reflect(const t_2d_vector a, const t_2d_vector reflection_axis);
+t_2d_vector	vector2d_rotate(const t_2d_vector point, const t_2d_vector rotation_point, const double angle);
+t_2d_vector	vector2d_point_symetry(const t_2d_vector point, const t_2d_vector point_of_symetry);
 
 typedef struct s_rectangle
 {
@@ -197,7 +212,14 @@ typedef struct	s_univers {
 	double		time_ratio;
 }				univers;
 
-extern univers	*g_univers;
+extern univers	   *g_univers;
+extern t_2d_vector symetry_point;
+extern t_2d_vector symetry_axis;
+extern t_2d_vector defining_point;
+extern uint8_t	   g_global_alpha;
+extern bool		   symetry_on;
+
+# define ROTATIONS_PER_SEC 0.6 * 2 * M_PI
 
 void	init_univers(univers *univers);
 void	univers_remove_object(univers *univers, uint32_t index);
@@ -280,7 +302,7 @@ void			*ft_pthread_lines_drawing_routine(void *arg);
 ** Key handling
 */
 
-# define NBR_KEY_HOOKS 8
+# define NBR_KEY_HOOKS 11
 # define INVALID_KEYS_HOOKS_NBR "Invalid keys number given in macro expansion"
 
 void			ft_set_mlx_hooks(t_mlx_data *mlx_data, void **params);
@@ -300,8 +322,11 @@ void			ft_handler_s(void *param);
 void			ft_handler_e(void *param);
 void			ft_handler_w(void *param);
 void			ft_handler_s(void *param);
+void			ft_handler_toggle_symetry(void *param);
 void			ft_handler_d(void *param);
 void			ft_handler_a(void *param);
+void			ft_handler_alpha_up(void *param);
+void			ft_handler_alpha_down(void *param);
 void			ft_handler_r(void *param);
 void			ft_handler_m(void *param);
 void			ft_handler_left(void *param);
@@ -334,6 +359,24 @@ int32_t			ft_get_lerp(double z1, double z2
 /*
 ** Error handling
 */
+
+# define err(format, ...) do {											\
+		dprintf(2, BIN_NAME ": %s::%s:(%d): " format "\n", __FILE__, __func__, __LINE__, ##__VA_ARGS__); \
+		exit(EXIT_FAILURE);												\
+	} while (0);
+
+# define err_errno(format, ...) do {									\
+		dprintf(2, BIN_NAME ": %s::%s:(%d): " format ": %s\n", __FILE__, __func__, __LINE__, ##__VA_ARGS__, strerror(errno)); \
+		exit(EXIT_FAILURE);												\
+	} while (0);
+
+# define warn(format, ...) do {											\
+		dprintf(2, BIN_NAME ": %s::%s:(%d): Warning: " format "\n", __FILE__, __func__, __LINE__, ##__VA_ARGS__); \
+	} while (0);
+
+# define warn_errno(format, ...) do {									\
+		dprintf(2, BIN_NAME ": %s::%s:(%d): Warning: " format ": %s\n", __FILE__, __func__, __LINE__, ##__VA_ARGS__, strerror(errno)); \
+	} while (0);
 
 # define INVALID_MEM_CAPACITY "Invalid capacity given to ft_create_mem_block()"
 # define MALLOC_FAILURE "malloc() failed due to insufficient ressources left"

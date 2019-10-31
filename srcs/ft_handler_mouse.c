@@ -32,5 +32,6 @@ int	ft_handler_mouse(int button, int x, int y, void *private)
 	(void)button;
 	(void)private;
 	univers_add_object(g_univers, object);
+
 	return 0;
 }
