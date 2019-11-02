@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/25 16:55:51 by sclolus           #+#    #+#             */
-/*   Updated: 2019/10/31 05:06:40 by sclolus          ###   ########.fr       */
+/*   Updated: 2019/11/02 18:55:45 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ typedef void* t_mlx_ptr;
 # define STDIN_NOFILE 0
 # define GRAVITATIONAL_CONSTANT (6.674 / 100000000000.0)
 # define BASE_SCALING_FACTOR 1
-# define DEFAULT_OBJECT_NUMBER 1000
+# define DEFAULT_OBJECT_NUMBER 1
 # define SCALING_FACTOR_FACTOR 1.3
 
 # define ABS(x) (x < 0 ? -x : x)
@@ -143,6 +143,7 @@ typedef struct s_2d_vector
 }			   t_2d_vector;
 
 t_2d_vector vector2d_new(const double x, const double y);
+t_2d_vector vector2d_zero(void);
 t_2d_vector	vector2d_add(const t_2d_vector a, const t_2d_vector b);
 t_2d_vector vector2d_sub(const t_2d_vector a, const t_2d_vector b);
 t_2d_vector vector2d_scalar_multiply(const t_2d_vector a, double scalar);
@@ -156,6 +157,9 @@ t_2d_vector vector2d_normalize(const t_2d_vector a);
 t_2d_vector vector2d_reflect(const t_2d_vector a, const t_2d_vector reflection_axis);
 t_2d_vector	vector2d_rotate(const t_2d_vector point, const t_2d_vector rotation_point, const double angle);
 t_2d_vector	vector2d_point_symetry(const t_2d_vector point, const t_2d_vector point_of_symetry);
+
+double		bernstein_basis_polynomial(uint64_t n, uint64_t k, double x);
+t_2d_vector	bezier_2d_curve(uint64_t order, t_2d_vector *control_points, double t);
 
 typedef struct s_rectangle
 {

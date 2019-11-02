@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/25 16:54:59 by sclolus           #+#    #+#             */
-/*   Updated: 2019/10/31 04:40:33 by sclolus          ###   ########.fr       */
+/*   Updated: 2019/11/02 19:18:36 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,12 @@ static t_image_frame g_frame;
 univers				*g_univers;
 
 double	clamp(double x, double min, double max);
+int32_t	lerp(double x1, double x2, double x, double y1, double y2);
+double		vector2d_magnitude(const t_2d_vector a);
+t_2d_vector vector2d_multiply(const t_2d_vector a, const t_2d_vector b);
+bool	double_epsilon_eq(double a, double b, double epsilon);
+uint32_t	warping_line(double x);
+
 
 void	rectangle_map(t_rectangle rec, void (*lambda)(int32_t x, int32_t y, void *private), void *private)
 {
@@ -85,6 +91,11 @@ inline __attribute__((always_inline)) void pixel_put(int32_t x, int32_t y, uint3
 
 }
 
+double		stereographic_projection(t_2d_vector point, double radius)
+{
+	return point.x / (1.0 - point.y) * radius;
+}
+
 static void	circle_predicate(int32_t x, int32_t y, void *private)
 {
 	object *obj = ((object*)private);
@@ -97,9 +108,26 @@ static void	circle_predicate(int32_t x, int32_t y, void *private)
 
 	double dx = (obj->pos.x - f_x);
 	double dy = (obj->pos.y - f_y);
+	double squared_distance = dx * dx + dy * dy;
 
-	if (dx * dx + dy * dy <= obj->circle.radius * obj->circle.radius)
-		pixel_put(x, y, obj->color);
+	double projected_point = stereographic_projection(vector2d_new(f_x, f_y), sqrt(squared_distance));
+
+	if (squared_distance <= obj->circle.radius * obj->circle.radius) {
+		uint32_t	color;
+
+		/* if (projected_point < 0.0) { */
+		/* 	color = 0xff0000; */
+		/* } else { */
+		/* 	color = 0xff; */
+		/* } */
+		color = warping_line(projected_point);
+
+		if (double_epsilon_eq(squared_distance, obj->circle.radius * obj->circle.radius, 2.00)) {
+			color = lerp(-1.0, 1.0, projected_point, 0x1, 0xff);
+		}
+
+		pixel_put(x, y, color);
+	}
 }
 
 void	draw_circle(object *obj)
@@ -139,9 +167,6 @@ void	draw_circle(object *obj)
 }
 
 
-double		vector2d_magnitude(const t_2d_vector a);
-t_2d_vector vector2d_multiply(const t_2d_vector a, const t_2d_vector b);
-bool	double_epsilon_eq(double a, double b, double epsilon);
 static void line_predicate(int32_t x, int32_t y, void *private)
 {
 	object *obj = ((object*)private);
@@ -203,6 +228,11 @@ t_2d_vector vector2d_new(const double x, const double y)
 		.x = x,
 			.y = y,
 	};
+}
+
+t_2d_vector vector2d_zero(void)
+{
+	return vector2d_new(0.0, 0.0);
 }
 
 t_2d_vector	vector2d_add(const t_2d_vector a, const t_2d_vector b)
@@ -734,6 +764,32 @@ void	draw_trajectory(object *object)
 	rectangle_map(rec, &trajectory_predicate, object);
 }
 
+uint32_t	warping_line(double x)
+{
+	double		color = x + WINDOW_WIDTH / 2;
+	uint32_t	dist = (uint32_t)(color / WINDOW_WIDTH);
+
+	color = dist << 16 | dist << 8 | dist;
+	return color;
+}
+
+void		print_wrapping_line(void)
+{
+	uint32_t	y = WINDOW_HEIGHT / 2 - 10;
+
+	while (y < WINDOW_HEIGHT / 2) {
+		uint32_t	i = 0;
+
+		while (i < WINDOW_WIDTH)
+		{
+			uint32_t	color = warping_line((double)i - (double)(WINDOW_WIDTH/2));
+			pixel_put(i, y, color);
+			i++;
+		}
+		y++;
+	}
+}
+
 void	init_univers(univers *univers)
 {
 	struct s_object object =  {
@@ -772,8 +828,10 @@ void	init_univers(univers *univers)
 			.color = 0x2000FFFF,
 			.kind = CIRCLE,
 			.pos = {
-				.x = rand() % (int32_t)(WINDOW_WIDTH / BASE_SCALING_FACTOR * 5),
-				.y = rand() % (int32_t)(WINDOW_HEIGHT / BASE_SCALING_FACTOR * 5),
+				/* .x = rand() % (int32_t)(WINDOW_WIDTH / BASE_SCALING_FACTOR * 5), */
+				/* .y = rand() % (int32_t)(WINDOW_HEIGHT / BASE_SCALING_FACTOR * 5), */
+				.x = 0.0,
+				.y = 0.0,
 				/* .x = 0 + rand() % 2, */
 				/* .y = 0 + rand() % 2, */
 			},
@@ -804,6 +862,21 @@ void	init_univers(univers *univers)
 	/* univers->time_ratio = 1; */
 }
 
+void	limit_position_by_radius(object *obj, void *private)
+{
+	const double	limiting_radius = *(double *)private;
+
+	t_2d_vector		zero = vector2d_zero();
+
+	if (vector2d_distance(obj->pos, zero) > limiting_radius) {
+		t_2d_vector	dir = vector2d_scalar_multiply(vector2d_normalize(vector2d_sub(obj->pos, zero)), -1 * limiting_radius);
+
+		(void)dir;
+		/* obj->pos = dir; */
+		obj->velocity = vector2d_scalar_multiply(obj->velocity, -1);
+	}
+}
+
 int	draw_stuff()
 {
 	static time_t old = 0;
@@ -831,17 +904,38 @@ int	draw_stuff()
 	}
 	new = clock();
 	double elapsed_time = (double)(new - last_time) / (double)CLOCKS_PER_SEC * g_univers->time_ratio;
+	/* t_2d_vector	*other_points = malloc(sizeof(t_2d_vector) * (DEFAULT_OBJECT_NUMBER - 1)); */
+	/* static double	periodic = 0.0; */
 
+	/* periodic += elapsed_time; */
+
+	/* if (periodic > 10.0) { */
+	/* 	periodic = 0.0; */
+	/* } */
+
+	/* assert(other_points); */
+	/* for (uint32_t i = 0; i < DEFAULT_OBJECT_NUMBER - 1; i++) { */
+	/* 	other_points[i] = g_univers->objects[i + 1].pos; */
+	/* } */
+
+	/* /\* double current_time = ; *\/ */
+	/* g_univers->objects[0].pos = bezier_2d_curve(DEFAULT_OBJECT_NUMBER - 2, other_points, periodic / 10.0); */
+	/* free(other_points); */
 	/* const double	angle = ROTATIONS_PER_SEC * (elapsed_time * g_univers->time_ratio); */
 	/* struct folding_rotation rotation = { */
 	/* 	.angle = angle, */
 	/* }; */
+
+
 
 	/* univers_map_objects(g_univers, &objects_folding_rotation, (void *)&rotation); */
 
 	univers_apply_elapsed_time(&univers, elapsed_time);
 	univers_apply_gravity(&univers);
 	univers_apply_acceleration(&univers);
+	const double	limiting_radius = WINDOW_WIDTH * 10;
+	(void)limiting_radius;
+	univers_map_objects(g_univers, &limit_position_by_radius, (void *)&limiting_radius);
 
 	(void)elapsed_time;
 	last_time = new;
@@ -852,11 +946,64 @@ int	draw_stuff()
 	g_univers->cam.y -= ((float)WINDOW_HEIGHT / (g_univers->scaling_factor * 2.0));
 	draw_univers(&univers);
 	draw_trajectory(&univers.objects[univers.current_follow]);
+	print_wrapping_line();
 	mlx_put_image_to_window(g_mlx_data.connector, g_mlx_data.win, g_frame.frame, 0, 0);
-
 	draw_univers_hud(&univers);
 	old = new;
 	return (1);
+}
+
+uint64_t	factorial(uint64_t n)
+{
+	uint64_t	fac = 1;
+
+	while (n > 1) {
+		fac *= n;
+		n--;
+	}
+	return fac;
+}
+uint64_t	binomial_coefficient(uint64_t n, uint64_t k)
+{
+	assert(n >= k);
+	return factorial(n) / (factorial(k) * factorial(n - k));
+}
+
+void		bernstein_basis_polynomials(uint64_t n)
+{
+	uint64_t	current_v = 0;
+	char		polynomial[256];
+
+	while (current_v <= n)
+	{
+		uint64_t   coef = binomial_coefficient(n, current_v);
+
+		snprintf(polynomial, sizeof (polynomial), "%llux^%llu (1 - x)^%llu", coef, current_v, n - current_v);
+		current_v++;
+	}
+}
+
+double		bernstein_basis_polynomial(uint64_t n, uint64_t k, double x)
+{
+	assert(n >= k);
+	return (double)binomial_coefficient(n, k) * pow(x, k) * pow(1.0 - x, n - k);
+}
+
+t_2d_vector	bezier_2d_curve(uint64_t order, t_2d_vector *control_points, double t)
+{
+	uint64_t	i = 0;
+	t_2d_vector	bezier_point = vector2d_zero();
+
+	while (i <= order)
+	{
+		double		current_bernstein_polynomial = bernstein_basis_polynomial(order, i, t);
+		t_2d_vector	current_point				 = vector2d_scalar_multiply(control_points[i], current_bernstein_polynomial);
+
+		bezier_point = vector2d_add(bezier_point, current_point);
+		i++;
+	}
+
+	return bezier_point;
 }
 
 int	main(int argc, char **argv)
@@ -867,6 +1014,7 @@ int	main(int argc, char **argv)
 	/* t_mem_block			*data; */
 
 	(void)argv;
+	/* bernstein_basis_polynomials(4); */
 	if (argc == 1)
 	{
 		srand(time(NULL));
