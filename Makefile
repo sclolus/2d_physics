@@ -1,5 +1,7 @@
 NAME= physics
 SRC= srcs/main.c \
+	srcs/vectors.c \
+	srcs/colors.c \
 	srcs/ft_create_mem_block.c \
 	srcs/ft_mem_block_push_back_elem.c \
 	srcs/ft_get_image_frames.c \

@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/25 16:55:51 by sclolus           #+#    #+#             */
-/*   Updated: 2019/11/02 18:55:45 by sclolus          ###   ########.fr       */
+/*   Updated: 2019/11/03 02:12:12 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ typedef void* t_mlx_ptr;
 # define STDIN_NOFILE 0
 # define GRAVITATIONAL_CONSTANT (6.674 / 100000000000.0)
 # define BASE_SCALING_FACTOR 1
-# define DEFAULT_OBJECT_NUMBER 1
+# define DEFAULT_OBJECT_NUMBER 444
 # define SCALING_FACTOR_FACTOR 1.3
 
 # define ABS(x) (x < 0 ? -x : x)
@@ -160,6 +160,39 @@ t_2d_vector	vector2d_point_symetry(const t_2d_vector point, const t_2d_vector po
 
 double		bernstein_basis_polynomial(uint64_t n, uint64_t k, double x);
 t_2d_vector	bezier_2d_curve(uint64_t order, t_2d_vector *control_points, double t);
+
+typedef struct s_3d_vector
+{
+	double	x;
+	double	y;
+	double	z;
+}				t_3d_vector;
+
+typedef struct	sline {
+	t_3d_vector	point;
+	t_3d_vector	dir;
+}				line;
+
+line			line_new(t_3d_vector point, t_3d_vector direction);
+
+typedef struct	splan {
+	t_3d_vector	point;
+	t_3d_vector	normal;
+}				plan;
+
+t_3d_vector	vector3d_add(const t_3d_vector a, const t_3d_vector b);
+t_3d_vector	vector3d_sub(const t_3d_vector a, const t_3d_vector b);
+t_3d_vector	vector3d_scalar_multiply(const t_3d_vector a, const double scalar);
+t_3d_vector	vector3d_scalar_divide(const t_3d_vector a, const double scalar);
+t_3d_vector	vector3d_normalize(const t_3d_vector a);
+double		vector3d_magnitude(const t_3d_vector a);
+double		vector3d_distance(const t_3d_vector a, const t_3d_vector b);
+t_3d_vector	vector3d_new(double x, double y, double z);
+t_3d_vector	vector3d_zero(void);
+double		vector3d_dot_product(const t_3d_vector a, const t_3d_vector b);
+t_3d_vector	vector3d_reflect(const t_3d_vector a, const plan reflection_plan);
+
+bool		double_epsilon_eq(double a, double b, double epsilon);
 
 typedef struct s_rectangle
 {

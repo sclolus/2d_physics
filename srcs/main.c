@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/25 16:54:59 by sclolus           #+#    #+#             */
-/*   Updated: 2019/11/02 19:18:36 by sclolus          ###   ########.fr       */
+/*   Updated: 2019/11/03 01:15:48 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,12 +115,8 @@ static void	circle_predicate(int32_t x, int32_t y, void *private)
 	if (squared_distance <= obj->circle.radius * obj->circle.radius) {
 		uint32_t	color;
 
-		/* if (projected_point < 0.0) { */
-		/* 	color = 0xff0000; */
-		/* } else { */
-		/* 	color = 0xff; */
-		/* } */
-		color = warping_line(projected_point);
+		color = obj->color;
+		/* color = warping_line(projected_point); */
 
 		if (double_epsilon_eq(squared_distance, obj->circle.radius * obj->circle.radius, 2.00)) {
 			color = lerp(-1.0, 1.0, projected_point, 0x1, 0xff);
@@ -828,10 +824,10 @@ void	init_univers(univers *univers)
 			.color = 0x2000FFFF,
 			.kind = CIRCLE,
 			.pos = {
-				/* .x = rand() % (int32_t)(WINDOW_WIDTH / BASE_SCALING_FACTOR * 5), */
-				/* .y = rand() % (int32_t)(WINDOW_HEIGHT / BASE_SCALING_FACTOR * 5), */
-				.x = 0.0,
-				.y = 0.0,
+				.x = rand() % (int32_t)(WINDOW_WIDTH / BASE_SCALING_FACTOR * 5),
+				.y = rand() % (int32_t)(WINDOW_HEIGHT / BASE_SCALING_FACTOR * 5),
+				/* .x = 0.0, */
+				/* .y = 0.0, */
 				/* .x = 0 + rand() % 2, */
 				/* .y = 0 + rand() % 2, */
 			},
@@ -946,7 +942,7 @@ int	draw_stuff()
 	g_univers->cam.y -= ((float)WINDOW_HEIGHT / (g_univers->scaling_factor * 2.0));
 	draw_univers(&univers);
 	draw_trajectory(&univers.objects[univers.current_follow]);
-	print_wrapping_line();
+	/* print_wrapping_line(); */
 	mlx_put_image_to_window(g_mlx_data.connector, g_mlx_data.win, g_frame.frame, 0, 0);
 	draw_univers_hud(&univers);
 	old = new;
@@ -1006,12 +1002,19 @@ t_2d_vector	bezier_2d_curve(uint64_t order, t_2d_vector *control_points, double 
 	return bezier_point;
 }
 
+#include "colors.h"
+
 int	main(int argc, char **argv)
 {
 	/* pthread_t			thread; */
 	t_mlx_data			mlx_data;
 	t_image_frame		*frames;
 	/* t_mem_block			*data; */
+
+	color_automata	automata = color_automata_new(vector3d_new(1/2.0, 1/2.0, 1/2.0), vector3d_new(-2, 0.5, 0));
+
+	uint32_t color = evaluate_color_automata(&automata, 0.0);
+	printf("Automata returned color: %x\n", color);
 
 	(void)argv;
 	/* bernstein_basis_polynomials(4); */
