@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/25 16:55:51 by sclolus           #+#    #+#             */
-/*   Updated: 2019/11/03 02:12:12 by sclolus          ###   ########.fr       */
+/*   Updated: 2019/11/04 01:46:46 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ typedef void* t_mlx_ptr;
 # define STDIN_NOFILE 0
 # define GRAVITATIONAL_CONSTANT (6.674 / 100000000000.0)
 # define BASE_SCALING_FACTOR 1
-# define DEFAULT_OBJECT_NUMBER 444
+# define DEFAULT_OBJECT_NUMBER 100
 # define SCALING_FACTOR_FACTOR 1.3
 
 # define ABS(x) (x < 0 ? -x : x)
@@ -157,6 +157,7 @@ t_2d_vector vector2d_normalize(const t_2d_vector a);
 t_2d_vector vector2d_reflect(const t_2d_vector a, const t_2d_vector reflection_axis);
 t_2d_vector	vector2d_rotate(const t_2d_vector point, const t_2d_vector rotation_point, const double angle);
 t_2d_vector	vector2d_point_symetry(const t_2d_vector point, const t_2d_vector point_of_symetry);
+t_2d_vector vector2d_abs(const t_2d_vector a);
 
 double		bernstein_basis_polynomial(uint64_t n, uint64_t k, double x);
 t_2d_vector	bezier_2d_curve(uint64_t order, t_2d_vector *control_points, double t);
@@ -210,6 +211,9 @@ typedef struct	s_line
 	t_2d_vector	dir;
 }				t_line;
 
+typedef struct s_plan {
+	double	scale;
+}			   t_plan;
 
 typedef uint32_t	t_color;
 typedef enum	s_shape_kind {
@@ -218,6 +222,7 @@ typedef enum	s_shape_kind {
 	ATTRACTOR,
 	LINE,
 	NONE,
+	COLOR_PLAN,
 	__SHAPE_KIND_VARIANTS_NBR,
 }				shape_kind;
 
@@ -231,6 +236,7 @@ typedef struct s_object {
 		t_circle	circle;
 		t_circle	attractor;
 		t_line		line;
+		t_plan		color_plan;
 	};
 	t_2d_vector		velocity;
 	t_2d_vector		acceleration;

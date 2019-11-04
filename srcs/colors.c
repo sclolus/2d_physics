@@ -6,7 +6,7 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/11/02 23:43:23 by sclolus           #+#    #+#             */
-/*   Updated: 2019/11/03 02:12:51 by sclolus          ###   ########.fr       */
+/*   Updated: 2019/11/04 01:37:41 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,4 +103,47 @@ uint32_t	evaluate_color_automata(color_automata *automata, double t)
 			return color;
 		}
 	}
+}
+
+uint32_t	color_plan(t_2d_vector point)
+{
+	point = vector2d_abs(point);
+
+	double			x_integral_part = floor(point.x);
+	double			y_integral_part = floor(point.y);
+	double			x_decimal_part = point.x - x_integral_part;
+	double			y_decimal_part = point.y - y_integral_part;
+
+	int64_t		x_integer = (int64_t)x_integral_part;
+	int64_t		y_integer = (int64_t)y_integral_part;
+
+	bool			x_congruent_to_0 = x_integer % 2 == 0;
+	bool			y_congruent_to_0 = y_integer % 2 == 0;
+
+	/* assert(x_decimal_part >= 0.0 && x_decimal_part <= 1.0); */
+	/* assert(y_decimal_part >= 0.0 && y_decimal_part <= 1.0); */
+	if (x_congruent_to_0 && y_congruent_to_0) {
+		point = vector2d_new(x_decimal_part, y_decimal_part);
+	} else if (x_congruent_to_0 && !y_congruent_to_0) {
+		point = vector2d_new(x_decimal_part, 1.0 - y_decimal_part);
+	} else if (!x_congruent_to_0 && y_congruent_to_0) {
+		point = vector2d_new(1.0 - x_decimal_part, y_decimal_part);
+	} else {
+		point = vector2d_new(1.0 - x_decimal_part, 1.0 - y_decimal_part);
+	}
+
+	// Map point into 256-Value-RGB Space
+	point = vector2d_scalar_multiply(point, 256.0);
+
+	uint32_t color = (uint32_t)point.x | (uint32_t)point.y << 8;
+
+	return color;
+}
+
+// Return the color in color space at position `t` of a line of direction `direction`, crossing the point `point`.
+uint32_t	color_line(t_2d_vector point, t_2d_vector direction, double t)
+{
+	t_2d_vector	color_point = vector2d_add(point, vector2d_scalar_multiply(direction, t));
+
+	return color_plan(color_point);
 }

@@ -6,11 +6,12 @@
 /*   By: sclolus <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/06/25 16:54:59 by sclolus           #+#    #+#             */
-/*   Updated: 2019/11/03 01:15:48 by sclolus          ###   ########.fr       */
+/*   Updated: 2019/11/04 02:12:11 by sclolus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "fdf.h"
+#include "colors.h"
 #include <assert.h>
 
 static t_mlx_data g_mlx_data;
@@ -50,7 +51,7 @@ t_2d_vector symetry_point = {
 	.y = WINDOW_HEIGHT,
 };
 
-uint8_t	g_global_alpha = 256 / 2;
+uint8_t	g_global_alpha = 0;
 /* t_2d_vector	defining_point = ; */
 
 inline __attribute__((always_inline)) void pixel_put(int32_t x, int32_t y, uint32_t color)
@@ -110,17 +111,23 @@ static void	circle_predicate(int32_t x, int32_t y, void *private)
 	double dy = (obj->pos.y - f_y);
 	double squared_distance = dx * dx + dy * dy;
 
-	double projected_point = stereographic_projection(vector2d_new(f_x, f_y), sqrt(squared_distance));
+	/* double projected_point = stereographic_projection(vector2d_new(f_x, f_y), sqrt(squared_distance)); */
 
 	if (squared_distance <= obj->circle.radius * obj->circle.radius) {
-		uint32_t	color;
+		/* uint32_t	color; */
 
-		color = obj->color;
+		/* color = obj->color; */
 		/* color = warping_line(projected_point); */
 
-		if (double_epsilon_eq(squared_distance, obj->circle.radius * obj->circle.radius, 2.00)) {
-			color = lerp(-1.0, 1.0, projected_point, 0x1, 0xff);
-		}
+		double	color_space_scale = 256.0 * 20.0;
+		uint32_t	color = color_line(vector2d_scalar_divide(obj->pos, color_space_scale),
+									   vector2d_scalar_divide(vector2d_normalize(obj->velocity),
+															  color_space_scale),
+									   vector2d_magnitude(obj->velocity) / color_space_scale);
+
+		/* if (double_epsilon_eq(squared_distance, obj->circle.radius * obj->circle.radius, 2.00)) { */
+		/* 	color = lerp(-1.0, 1.0, projected_point, 0x1, 0xff); */
+		/* } */
 
 		pixel_put(x, y, color);
 	}
@@ -168,24 +175,55 @@ static void line_predicate(int32_t x, int32_t y, void *private)
 	object *obj = ((object*)private);
 
 	assert(obj->kind == LINE);
-	double c = obj->pos.x * obj->line.dir.x + obj->pos.y * obj->line.dir.y;
+	double c = /* obj->pos.x * obj->line.dir.x + obj->pos.y * obj->line.dir.y */ obj->pos.y;
 	double a, b;
 	const double scaling_factor = g_univers->scaling_factor;
-	const double epsilon = clamp(1 / scaling_factor, 0.0, 1);
+	const double epsilon = clamp(1.0 / scaling_factor, 0.0, 1.0) * 3;
 
-	a = obj->line.dir.x;
-	b = obj->line.dir.y;
+	a = obj->line.dir.y;
+	b = 1.0;
 
 	double f_x = (double)x / scaling_factor;
 	double f_y = (double)y / scaling_factor;
 
 	f_x += g_univers->cam.x;
 	f_y += g_univers->cam.y;
+	f_x = (f_x - obj->pos.x) / obj->line.dir.x;
 
-	/* f_x *= scaling_factor; */
-	/* f_y *= scaling_factor; */
-	if (double_epsilon_eq((/* obj->pos.x -  */f_x) * a + b * (/* obj->pos.y -  */f_y), c, epsilon))
-		pixel_put(x, y, obj->color);
+	if (double_epsilon_eq((f_x) * -a + b * (f_y), c, epsilon)) {
+		t_2d_vector	point = vector2d_new(f_x, f_y);
+		double mag = vector2d_distance(obj->pos, point);
+
+
+		uint32_t	color = color_line(obj->pos, obj->line.dir, mag  / (double)256);
+		pixel_put(x, y, color);
+	}
+}
+
+static void	color_plan_predicate(int32_t x, int32_t y, void *private)
+{
+	const double	scaling_factor = g_univers->scaling_factor;
+	const double	f_x = (double)x / (scaling_factor) + g_univers->cam.x;
+	const double	f_y = (double)y / (scaling_factor) + g_univers->cam.y;
+	object			*plan = (object *)private;
+	t_2d_vector		point = vector2d_scalar_divide(vector2d_sub(vector2d_new(f_x, f_y), plan->pos), plan->color_plan.scale );
+
+	point = vector2d_new(fabs(point.x), fabs(point.y));
+
+	uint32_t color = color_plan(point);
+
+# define COLOR_PLAN_GRID_WIDTH 3
+# define CPLAN_WIDTH COLOR_PLAN_GRID_WIDTH
+	/* uint32_t	grid_x = (uint32_t)(fabs(f_x)) / CPLAN_WIDTH * CPLAN_WIDTH; */
+	/* uint32_t	grid_y = (uint32_t)(fabs(f_y)) / CPLAN_WIDTH * CPLAN_WIDTH; */
+
+	/* if ((grid_x) % 256 == 0 */
+	/* 	|| (grid_y) % 256 == 0) { */
+	/* 	pixel_put(x, y, 0x0); */
+	/* } else { */
+	pixel_put(x, y, color);
+	/* } */
+
 }
 
 void	draw_line(object *obj)
@@ -196,6 +234,16 @@ void	draw_line(object *obj)
 	};
 
 	rectangle_map(rec, &line_predicate, obj);
+}
+
+void	draw_color_plan(object *obj)
+{
+	t_rectangle rec = {
+		.min = {.x = 0, .y = 0},
+		.max = {.x = WINDOW_WIDTH, .y = WINDOW_HEIGHT - WINDOW_HEIGHT / 4},
+	};
+
+	rectangle_map(rec, &color_plan_predicate, obj);
 }
 
 void	draw_object(object *obj)
@@ -211,6 +259,9 @@ void	draw_object(object *obj)
 		break;
 	case LINE:
 		draw_line(obj);
+		break;
+	case COLOR_PLAN:
+		draw_color_plan(obj);
 		break;
 	default:
 		/* dprintf(2, "draw_object(): Error: Object kind is not supported."); */
@@ -229,6 +280,14 @@ t_2d_vector vector2d_new(const double x, const double y)
 t_2d_vector vector2d_zero(void)
 {
 	return vector2d_new(0.0, 0.0);
+}
+
+t_2d_vector vector2d_abs(const t_2d_vector a)
+{
+	return (t_2d_vector) {
+		.x = fabs(a.x),
+			.y = fabs(a.y),
+	};
 }
 
 t_2d_vector	vector2d_add(const t_2d_vector a, const t_2d_vector b)
@@ -402,34 +461,35 @@ uint32_t	collisions_number = 0;
 
 void	draw_univers_hud(univers *univers)
 {
-	static char buffer[256];
+	static char		buffer[256];
+	const uint32_t	hud_color = 0x0;
 
 	snprintf(buffer, sizeof(buffer) - 1, "objects: %u", univers->nbr_objects);
-	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 100, 0xFFFFFF, buffer);
+	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 100, hud_color, buffer);
 
 	t_2d_vector pos = univers->objects[univers->current_follow].pos;
 	snprintf(buffer, sizeof(buffer) - 1, "pos: .x = %lf .y = %lf", pos.x, pos.y);
-	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 115, 0xFFFFFF, buffer);
+	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 115, hud_color, buffer);
 
 	pos = univers->cam;
 	snprintf(buffer, sizeof(buffer) - 1, "pos: .x = %lf .y = %lf", pos.x, pos.y);
-	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 190, 0xFFFFFF, buffer);
+	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 190, hud_color, buffer);
 
 	snprintf(buffer, sizeof(buffer) - 1, ".scaling_factor: %lf", univers->scaling_factor);
-	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 130, 0xFFFFFF, buffer);
+	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 130, hud_color, buffer);
 
 	snprintf(buffer, sizeof(buffer) - 1, ".time_ratio: %lf", univers->time_ratio);
-	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 145, 0xFFFFFF, buffer);
+	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 145, hud_color, buffer);
 
 	snprintf(buffer, sizeof(buffer) - 1, ".collisions_number: %u", collisions_number);
-	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 160, 0xFFFFFF, buffer);
+	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 160, hud_color, buffer);
 
 	snprintf(buffer, sizeof(buffer) - 1, ".alpha: %hhx", g_global_alpha);
-	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 175, 0xFFFFFF, buffer);
+	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 175, hud_color, buffer);
 
 	if (univers->objects[univers->current_follow].kind == LINE)
 	{		snprintf(buffer, sizeof(buffer) - 1, ".type: %s", ENUM_STRING(LINE));
-	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 175, 0xFFFFFF, buffer);
+	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 25, hud_color, buffer);
 	}
 
 
@@ -652,6 +712,7 @@ void	objects_folding_rotation(object *object, void *private)
 	}
 
 	object->pos = vector2d_rotate(object->pos, center_of_rotation, rotation->angle);
+	/* object->line.dir = vector2d_rotate(object->line.dir, center_of_rotation, rotation->angle); */
 	rotation->previous_object = object;
 }
 
@@ -788,17 +849,17 @@ void		print_wrapping_line(void)
 
 void	init_univers(univers *univers)
 {
-	struct s_object object =  {
-		.color = 0xFFFF,
+	struct s_object line =  {
+		.color = 0x0,
 		.kind = LINE,
 		.pos = {
-			.x = -1,
-			.y = -1,
+			.x = 0,
+			.y = 0,
 		},
 		.line = {
 			.dir = {
-				.x = 1,
-				.y = -1,
+				.x = 0,
+				.y = 1,
 			},
 		},
 		.velocity = {
@@ -816,24 +877,33 @@ void	init_univers(univers *univers)
 		},
 	};
 
-	(void)object;
-	/* univers_add_object(univers, object); */
-
+	(void)line;
 	for (uint32_t i = 0; i < DEFAULT_OBJECT_NUMBER; i++) {
 		struct s_object object = {
 			.color = 0x2000FFFF,
 			.kind = CIRCLE,
+			/* .kind = COLOR_PLAN, */
+			/* .kind = LINE, */
 			.pos = {
-				.x = rand() % (int32_t)(WINDOW_WIDTH / BASE_SCALING_FACTOR * 5),
-				.y = rand() % (int32_t)(WINDOW_HEIGHT / BASE_SCALING_FACTOR * 5),
-				/* .x = 0.0, */
-				/* .y = 0.0, */
+				.x = rand() % (int32_t)(WINDOW_WIDTH / BASE_SCALING_FACTOR) * 10,
+				.y = rand() % (int32_t)(WINDOW_HEIGHT / BASE_SCALING_FACTOR) * 10,
+				/* .x = 0, */
+				/* .y = 0, */
 				/* .x = 0 + rand() % 2, */
 				/* .y = 0 + rand() % 2, */
 			},
 			.circle = {
-				.radius = 10 + (i * 2) % 60,
+				.radius = 100 + i / 60 * 10,
 			},
+			/* .line = { */
+			/* 	.dir = { */
+			/* 		.x = rand() % 200 - 100.0, */
+			/* 		.y = rand() % 200 - 100.0, */
+			/* 	}, */
+			/* }, */
+			/* .color_plan = { */
+			/* 	.scale = 256.0 */
+			/* }, */
 			.velocity = {
 				.x = 0,
 				.y = 0,
@@ -850,6 +920,8 @@ void	init_univers(univers *univers)
 		};
 		univers_add_object(univers, object);
 	}
+
+	/* univers_add_object(univers, line); */
 
 	collisions_number = 0;
 	univers->cam.x = 0;
@@ -891,7 +963,13 @@ int	draw_stuff()
 	};
 
 
-	memset(g_frame.buffer, 0, WINDOW_WIDTH * WINDOW_HEIGHT * 4);
+	/* memset(g_frame.buffer, 0xff, WINDOW_WIDTH * WINDOW_HEIGHT * 4); */
+	uint32_t	*pixels = g_frame.buffer;
+	for (uint32_t y = 0; y < WINDOW_HEIGHT; y++) {
+		for (uint32_t x = 0; x < WINDOW_WIDTH; x++) {
+			pixels[y * WINDOW_WIDTH + x] = 0x00ffffff;
+		}
+	}
 	if (old == 0) {
 		g_univers = &univers;
 		init_univers(&univers);
@@ -925,6 +1003,7 @@ int	draw_stuff()
 
 
 	/* univers_map_objects(g_univers, &objects_folding_rotation, (void *)&rotation); */
+	/* g_univers->objects[1].line.dir = vector2d_rotate(g_univers->objects[1].line.dir, vector2d_zero(), angle); */
 
 	univers_apply_elapsed_time(&univers, elapsed_time);
 	univers_apply_gravity(&univers);
@@ -943,6 +1022,36 @@ int	draw_stuff()
 	draw_univers(&univers);
 	draw_trajectory(&univers.objects[univers.current_follow]);
 	/* print_wrapping_line(); */
+
+	struct s_object line =  {
+		.color = 0xFF0000,
+		.kind = LINE,
+		.pos = {
+			.x = 0,
+			.y = WINDOW_HEIGHT - WINDOW_HEIGHT / 8,
+		},
+		.line = {
+			.dir = {
+				.x = 1,
+				.y = 0,
+			},
+		},
+		.velocity = {
+			.x = 0,
+			.y = 0,
+		},
+		.acceleration = {
+			.x = 0,
+			.y = 0,
+		},
+		.mass = 1e10,
+		.applied_forces = {
+			.x = 0,
+			.y = 0,
+		},
+	};
+
+	draw_object(&line);
 	mlx_put_image_to_window(g_mlx_data.connector, g_mlx_data.win, g_frame.frame, 0, 0);
 	draw_univers_hud(&univers);
 	old = new;
@@ -959,6 +1068,7 @@ uint64_t	factorial(uint64_t n)
 	}
 	return fac;
 }
+
 uint64_t	binomial_coefficient(uint64_t n, uint64_t k)
 {
 	assert(n >= k);
@@ -1001,8 +1111,6 @@ t_2d_vector	bezier_2d_curve(uint64_t order, t_2d_vector *control_points, double 
 
 	return bezier_point;
 }
-
-#include "colors.h"
 
 int	main(int argc, char **argv)
 {
