@@ -43,7 +43,7 @@ HDRS= includes/fdf.h
 OBJ= $(SRC:.c=.o)
 HDR_PATH= ./libft/includes/
 CC= gcc
-CC_FLAGS= -v -Wall -Werror -Wextra
+CC_FLAGS= -v -Wall -Wextra -isystem /usr/include -L /usr/lib/x86_64-linux-gnu/ -lm -lXext -lX11 -lGL -lpthread
 
 ifeq ($(optim),yes)
 	CC_FLAGS += -Ofast -march=native
@@ -54,14 +54,14 @@ ifeq ($(debug),yes)
 	CC_FLAGS +=  -g3 -fsanitize=address -fsanitize-blacklist=my_ignores.txt
 endif
 
-MLX_PATH=./minilibx_macos/
+MLX_PATH=./minilibx-linux/
 LIBFT_PATH=./libft/
-FLAGS= -L$(MLX_PATH) -lmlx -L$(LIBFT_PATH) -lft -I$(HDR_PATH) -I./includes -I$(MLX_PATH) -framework OpenGL -framework AppKit
+FLAGS=  -isystem /usr/include -L$(MLX_PATH)  -I$(MLX_PATH) -lm -lmlx -L$(LIBFT_PATH) -lft -I$(HDR_PATH) -I./includes -lGL -lX11  -lXext  -lpthread # -framework OpenGL -framework AppKit 
 
 all: submodule $(NAME)
 
 submodule:
-	@make -C minilibx_macos
+	@make -C $(MLX_PATH)
 	@make -C libft/
 
 $(NAME): $(OBJ)
