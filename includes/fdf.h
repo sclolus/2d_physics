@@ -202,6 +202,7 @@ typedef struct s_object {
 	t_2d_vector		acceleration;
 	double			mass;
 	t_2d_vector		applied_forces;
+	double			lifetime;
 }				object;
 
 typedef bool (*t_f_intersection)(object *a, object *b);
@@ -213,6 +214,7 @@ typedef struct	s_univers {
 	double		scaling_factor;
 	uint32_t	current_follow;
 	double		time_ratio;
+	double		lifetime;
 }				univers;
 
 extern univers	   *g_univers;

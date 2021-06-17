@@ -51,7 +51,7 @@ endif
 
 
 ifeq ($(debug),yes)
-	CC_FLAGS +=  -g3 -fsanitize=address -fsanitize-blacklist=my_ignores.txt
+	CC_FLAGS +=  -g3 -fsanitize=address # -fsanitize-blacklist=my_ignores.txt
 endif
 
 MLX_PATH=./minilibx-linux/

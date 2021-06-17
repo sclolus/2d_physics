@@ -68,18 +68,18 @@ inline __attribute__((always_inline)) void pixel_put(int32_t x, int32_t y, uint3
 			int32_t	projected_y = (int32_t) (reflected_point.y);
 
 			if (!(projected_x >= 0 && projected_y >= 0
-				  && projected_x < WINDOW_WIDTH && projected_y < WINDOW_HEIGHT)) {
+			      && projected_x < WINDOW_WIDTH && projected_y < WINDOW_HEIGHT)) {
 				/* if (x < 10 && y < 10) { */
-					/* warn("Reflected point is outside of window: .x = %d, .y = %d, orignal_point: .x = %d, .y = %d", projected_x, projected_y, x, y); */
+				/* warn("Reflected point is outside of window: .x = %d, .y = %d, orignal_point: .x = %d, .y = %d", projected_x, projected_y, x, y); */
 				/* } */
 			} else {
-				((uint32_t *)(g_frame.buffer))[projected_x + projected_y * WINDOW_WIDTH] = ((~0xff000000 & ~color) | alpha_mask) | 0xFF0000;
+				((uint32_t *)(g_frame.buffer))[projected_x + projected_y * WINDOW_WIDTH] = ((~0xff000000 & ~color) | alpha_mask << 24) | 0xFF0000;
 			}
 		}
 
 		if (x >= 0 && y >= 0
-			&& x < WINDOW_WIDTH && y < WINDOW_HEIGHT) {
-			((uint32_t *)(g_frame.buffer))[x + y * WINDOW_WIDTH] = color | alpha_mask;
+		    && x < WINDOW_WIDTH && y < WINDOW_HEIGHT) {
+			((uint32_t *)(g_frame.buffer))[x + y * WINDOW_WIDTH] = color | alpha_mask << 24;
 		}
 	}
 
@@ -98,7 +98,7 @@ static void	circle_predicate(int32_t x, int32_t y, void *private)
 	double dx = (obj->pos.x - f_x);
 	double dy = (obj->pos.y - f_y);
 
-	if (dx * dx + dy * dy <= obj->circle.radius * obj->circle.radius)
+	if (dx * dx + dy * dy <= obj->circle.radius * obj->circle.radius * obj->circle.radius)
 		pixel_put(x, y, obj->color);
 }
 
@@ -201,7 +201,7 @@ t_2d_vector vector2d_new(const double x, const double y)
 {
 	return (t_2d_vector){
 		.x = x,
-			.y = y,
+		.y = y,
 	};
 }
 
@@ -209,24 +209,24 @@ t_2d_vector	vector2d_add(const t_2d_vector a, const t_2d_vector b)
 {
 	return (t_2d_vector) {
 		.x = a.x + b.x,
-			.y = a.y + b.y,
-			};
+		.y = a.y + b.y,
+	};
 }
 
 t_2d_vector vector2d_sub(const t_2d_vector a, const t_2d_vector b)
 {
 	return (t_2d_vector) {
 		.x = a.x - b.x,
-			.y = a.y - b.y,
-			};
+		.y = a.y - b.y,
+	};
 }
 
 t_2d_vector vector2d_scalar_multiply(const t_2d_vector a, double scalar)
 {
 	return (t_2d_vector) {
 		.x = a.x * scalar,
-			.y = a.y * scalar,
-			};
+		.y = a.y * scalar,
+	};
 }
 
 t_2d_vector vector2d_scalar_divide(const t_2d_vector a, double scalar)
@@ -234,8 +234,8 @@ t_2d_vector vector2d_scalar_divide(const t_2d_vector a, double scalar)
 	/* return vector2d_scalar_multiply(a, 1.0 / scalar); */
 	return (t_2d_vector) {
 		.x = a.x / scalar,
-			.y = a.y / scalar,
-			};
+		.y = a.y / scalar,
+	};
 }
 
 
@@ -261,7 +261,7 @@ t_2d_vector	vector2d_multiply(const t_2d_vector a, const t_2d_vector b)
 {
 	return (t_2d_vector){
 		.x = a.x * b.x,
-			.y = a.y * b.y,
+		.y = a.y * b.y,
 
 	};
 }
@@ -401,9 +401,13 @@ void	draw_univers_hud(univers *univers)
 	snprintf(buffer, sizeof(buffer) - 1, ".alpha: %hhx", g_global_alpha);
 	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 175, 0xFFFFFF, buffer);
 
+	snprintf(buffer, sizeof(buffer) - 1, ".lifetime: %lf", univers->lifetime);
+	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 205, 0xFFFFFF, buffer);
+
+
 	if (univers->objects[univers->current_follow].kind == LINE)
 	{		snprintf(buffer, sizeof(buffer) - 1, ".type: %s", ENUM_STRING(LINE));
-	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 175, 0xFFFFFF, buffer);
+		mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 175, 0xFFFFFF, buffer);
 	}
 
 
@@ -412,7 +416,7 @@ void	draw_univers_hud(univers *univers)
 int32_t	lerp(double x1, double x2, double x, double y1, double y2)
 {
 	return ((int32_t)(((y1 * (x2 - x)) + (y2
-										  * (x - x1))) / (x2 - x1)));
+					      * (x - x1))) / (x2 - x1)));
 }
 
 bool	double_epsilon_eq(double a, double b, double epsilon)
@@ -499,8 +503,27 @@ void	apply_elapsed_time_wrapper(object *object, void *private)
 void	color_object(object *object, void *private)
 {
 	(void)private;
-	object->color = lerp(0.0, 100.0, vector2d_magnitude(object->velocity), 0, 0xFF) | 0xFF00;
+	object->color = lerp(0.0, 100.0, vector2d_magnitude(object->velocity), 0xA, 0xFF) << 8;
 }
+
+void	lifetime_update(object *object, void *private)
+{
+	double elapsed_time = *((double *)private);
+	
+	object->lifetime -= elapsed_time;
+}
+
+
+void	particle_death(object *object, void *private)
+{
+	univers *univers = private;
+	uint32_t index = (object - univers->objects) / sizeof(object);
+	
+	if (object->lifetime <= 0.0f) {
+		univers_remove_object(univers, index);
+	}
+}
+
 
 void	apply_collision(object *a, object *b, void *private)
 {
@@ -542,6 +565,49 @@ void	apply_collision(object *a, object *b, void *private)
 	}
 }
 
+object	random_particle(void) {
+
+	object object = {
+		.color = 0x2000FFFF,
+		.kind = CIRCLE,
+		.pos = {
+			.x = rand() % (int32_t)(WINDOW_WIDTH / BASE_SCALING_FACTOR * 5),
+			.y = rand() % (int32_t)(WINDOW_HEIGHT / BASE_SCALING_FACTOR * 5),
+			/* .x = 0 + rand() % 2, */
+			/* .y = 0 + rand() % 2, */
+		},
+		.circle = {
+			.radius = 10 + (rand() * 3 / DEFAULT_OBJECT_NUMBER) % 60,
+		},
+		.velocity = {
+			.x = 0,
+			.y = 0,
+		},
+		.acceleration = {
+			.x = 0,
+			.y = 0,
+		},
+		.mass = 1e18,
+		.applied_forces = {
+			.x = 0,
+			.y = 0,
+		},
+		.lifetime = (double)(rand() % 5000 + 1),
+	};
+
+	return object;
+
+}
+
+void	univers_respawn_dead_particles(univers *univers) {
+	uint32_t particles_to_spawn = DEFAULT_OBJECT_NUMBER - univers->nbr_objects;
+
+	for (uint32_t i = 0; i < particles_to_spawn; i++) {
+		
+		univers_add_object(univers, random_particle());
+	}
+}
+
 void	univers_apply_elapsed_time(univers *univers, double elapsed_time)
 {
 	const double	angle = ROTATIONS_PER_SEC * (elapsed_time / g_univers->time_ratio);
@@ -552,6 +618,12 @@ void	univers_apply_elapsed_time(univers *univers, double elapsed_time)
 
 	univers_map_objects(univers, &apply_elapsed_time_wrapper, &elapsed_time);
 	univers_map_objects(univers, &color_object, NULL);
+	
+	univers_map_objects(univers, &lifetime_update, &elapsed_time);
+	univers->lifetime += elapsed_time;
+	
+	univers_map_objects(univers, &particle_death, univers);
+	univers_respawn_dead_particles(univers);
 	univers_map_2d_objects(univers, &apply_collision, univers);
 }
 
@@ -768,33 +840,7 @@ void	init_univers(univers *univers)
 	/* univers_add_object(univers, object); */
 
 	for (uint32_t i = 0; i < DEFAULT_OBJECT_NUMBER; i++) {
-		struct s_object object = {
-			.color = 0x2000FFFF,
-			.kind = CIRCLE,
-			.pos = {
-				.x = rand() % (int32_t)(WINDOW_WIDTH / BASE_SCALING_FACTOR * 5),
-				.y = rand() % (int32_t)(WINDOW_HEIGHT / BASE_SCALING_FACTOR * 5),
-				/* .x = 0 + rand() % 2, */
-				/* .y = 0 + rand() % 2, */
-			},
-			.circle = {
-				.radius = 10 + (i * 2) % 60,
-			},
-			.velocity = {
-				.x = 0,
-				.y = 0,
-			},
-			.acceleration = {
-				.x = 0,
-				.y = 0,
-			},
-			.mass = 1e18,
-			.applied_forces = {
-				.x = 0,
-				.y = 0,
-			},
-		};
-		univers_add_object(univers, object);
+		univers_add_object(univers, random_particle());
 	}
 
 	collisions_number = 0;
@@ -847,9 +893,9 @@ int	draw_stuff()
 	last_time = new;
 	if (new - old < CLOCK_FRAME_DELTA)
 		return 0;
-	g_univers->cam = g_univers->objects[g_univers->current_follow].pos;
-	g_univers->cam.x -= ((float)WINDOW_WIDTH / (g_univers->scaling_factor * 2.0));
-	g_univers->cam.y -= ((float)WINDOW_HEIGHT / (g_univers->scaling_factor * 2.0));
+	/* g_univers->cam = g_univers->objects[g_univers->current_follow].pos; */
+	/* g_univers->cam.x -= ((float)WINDOW_WIDTH / (g_univers->scaling_factor * 2.0)); */
+	/* g_univers->cam.y -= ((float)WINDOW_HEIGHT / (g_univers->scaling_factor * 2.0)); */
 	draw_univers(&univers);
 	draw_trajectory(&univers.objects[univers.current_follow]);
 	mlx_put_image_to_window(g_mlx_data.connector, g_mlx_data.win, g_frame.frame, 0, 0);
@@ -874,7 +920,7 @@ int	main(int argc, char **argv)
 		if (!(mlx_data.connector = mlx_init()))
 			ft_error_exit(1, (char*[]){MLX_INIT_ERROR}, EXIT_FAILURE);
 		if (!(mlx_data.win = mlx_new_window(mlx_data.connector, WINDOW_WIDTH
-											, WINDOW_HEIGHT, WINDOW_NAME)))
+						    , WINDOW_HEIGHT, WINDOW_NAME)))
 			ft_error_exit(1, (char*[]){MLX_NEW_WIN_ERROR}, EXIT_FAILURE);
 		frames = ft_get_image_frames(mlx_data.connector, NBR_IMAGE_FRAME);
 		/* lines = ft_set_lines(data); */
@@ -887,12 +933,12 @@ int	main(int argc, char **argv)
 		g_frame = frames[0];
 		draw_stuff();
 		ft_set_mlx_hooks(&mlx_data, (void*[]){mlx_data.connector
-					, mlx_data.win, frames, NULL, NULL});
+				, mlx_data.win, frames, NULL, NULL});
 		mlx_loop_hook(mlx_data.connector, &draw_stuff, NULL);
 		mlx_hook(mlx_data.win, ButtonPress, ButtonPressMask, &ft_handler_mouse
-				 , NULL);
+			 , NULL);
 		mlx_hook(mlx_data.win, MotionNotify, 0, &ft_handler_mouse_motion
-				 , NULL);
+			 , NULL);
 
 		mlx_loop(mlx_data.connector);
 	}
