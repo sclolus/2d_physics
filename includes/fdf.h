@@ -27,6 +27,9 @@
 # include <time.h>
 # include <stdbool.h>
 
+# include <X11/Xlib.h>
+# include <X11/Xutil.h>
+
 typedef void* t_mlx_win;
 typedef void* t_mlx_img;
 typedef void* t_mlx_ptr;

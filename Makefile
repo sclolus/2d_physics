@@ -43,7 +43,7 @@ HDRS= includes/fdf.h
 OBJ= $(SRC:.c=.o)
 HDR_PATH= ./libft/includes/
 CC= gcc
-CC_FLAGS= -v -Wall -Wextra -isystem /usr/include -L /usr/lib/x86_64-linux-gnu/ -lm -lXext -lX11 -lGL -lpthread
+CC_FLAGS= -Wall -Wextra -isystem /usr/include -L /usr/lib/x86_64-linux-gnu/ -lm -lXext -lX11 -lGL -lpthread
 
 ifeq ($(optim),yes)
 	CC_FLAGS += -Ofast -march=native

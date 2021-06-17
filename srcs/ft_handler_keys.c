@@ -15,27 +15,27 @@
 static t_keycode_f	*ft_get_keycodes_f(void)
 {
 	static t_keycode_f	keycodes_f[] = {
-		{ft_handler_esc, KEY_ESCAPE, 0},
+		{ft_handler_esc, XK_Escape, 0},
 		/* {ft_handler_right, KEY_RIGHT, 0}, */
 		/* {ft_handler_left, KEY_LEFT, 0}, */
 		/* {ft_handler_up, KEY_UP, 0}, */
 		/* {ft_handler_down, KEY_DOWN, 0}, */
 		/* {ft_handler_q, KEY_Q, 0}, */
-		{ft_handler_r, KEY_R, 0},
-		{ft_handler_s, KEY_S, 0},
-		{ft_handler_m, KEY_M, 0},
-		{ft_handler_alpha_up, KEY_T, 0},
-		{ft_handler_alpha_down, KEY_Y, 0},
-		{ft_handler_toggle_symetry, KEY_F, 0},
+		{ft_handler_alpha_up, XK_t, 0},
+		{ft_handler_alpha_down, XK_y, 0},
+		{ft_handler_toggle_symetry, XK_f, 0},
+		{ft_handler_r, XK_r, 0},
+		{ft_handler_s, XK_s, 0},
+		{ft_handler_m, XK_m, 0},
 		/* {ft_handler_a, KEY_A, 0}, */
 		/* {ft_handler_d, KEY_D, 0}, */
 		/* {ft_handler_w, KEY_W, 0}, */
 		/* {ft_handler_s, KEY_S, 0}, */
 		/* {ft_handler_e, KEY_E, 0}, */
-		{ft_handler_left, KEY_LEFT, 0},
-		{ft_handler_right, KEY_RIGHT, 0},
-		{ft_handler_pad_up, KEY_UP, 0},
-		{ft_handler_pad_down, KEY_DOWN, 0}};
+		{ft_handler_left, XK_KP_Left, 0},
+		{ft_handler_right, XK_KP_Right, 0},
+		{ft_handler_pad_up, XK_KP_Up, 0},
+		{ft_handler_pad_down, XK_KP_Down, 0}};
 
 	if (sizeof(keycodes_f) / sizeof(t_keycode_f) != NBR_KEY_HOOKS)
 		ft_error_exit(1, (char*[]){INVALID_KEYS_HOOKS_NBR}, EXIT_FAILURE);
