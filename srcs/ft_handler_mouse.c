@@ -28,10 +28,12 @@ int	ft_handler_mouse(int button, int x, int y, void *private)
 		},
 	};
 	printf("added object at (%lf,%lf)\n", object.pos.x, object.pos.y);
+	printf("Calling ft_handler_mouse\n");
+
 
 	(void)button;
 	(void)private;
-	univers_add_object(g_univers, object);
 
+	univers_add_object(g_univers, object);
 	return 0;
 }

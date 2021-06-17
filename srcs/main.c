@@ -1037,9 +1037,9 @@ int	main(int argc, char **argv)
 		ft_set_mlx_hooks(&mlx_data, (void*[]){mlx_data.connector
 					, mlx_data.win, frames, NULL, NULL});
 		mlx_loop_hook(mlx_data.connector, &draw_stuff, NULL);
-		mlx_hook(mlx_data.win, BUTTONPRESS, BUTTONPRESSMASK, &ft_handler_mouse
+		mlx_hook(mlx_data.win, ButtonPress, ButtonPressMask, &ft_handler_mouse
 				 , NULL);
-		mlx_hook(mlx_data.win, MOTIONNOTIFY, 0, &ft_handler_mouse_motion
+		mlx_hook(mlx_data.win, MotionNotify, 0, &ft_handler_mouse_motion
 				 , NULL);
 
 		mlx_loop(mlx_data.connector);

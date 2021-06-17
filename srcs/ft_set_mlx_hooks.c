@@ -14,8 +14,9 @@
 
 void	ft_set_mlx_hooks(t_mlx_data *mlx_data, void **params)
 {
-	mlx_hook(mlx_data->win, KEYPRESS, KEYPRESSMASK | KEYMAPSTATEMASK
+//	KeyPressMask, KeyReleaseMask, ButtonPressMask, and ButtonReleaseMask
+	mlx_hook(mlx_data->win, KeyPress, KeyPressMask
 			, &ft_handler_keys, params);
-	mlx_hook(mlx_data->win, KEYRELEASE, KEYRELEASEMASK | KEYMAPSTATEMASK
+	mlx_hook(mlx_data->win, KeyRelease, KeyReleaseMask
 			, &ft_handler_keys_release, params);
 }
