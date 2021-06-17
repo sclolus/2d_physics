@@ -32,10 +32,10 @@ static t_keycode_f	*ft_get_keycodes_f(void)
 		/* {ft_handler_w, KEY_W, 0}, */
 		/* {ft_handler_s, KEY_S, 0}, */
 		/* {ft_handler_e, KEY_E, 0}, */
-		{ft_handler_left, XK_KP_Left, 0},
-		{ft_handler_right, XK_KP_Right, 0},
-		{ft_handler_pad_up, XK_KP_Up, 0},
-		{ft_handler_pad_down, XK_KP_Down, 0}};
+		{ft_handler_left, XK_Left, 0},
+		{ft_handler_right, XK_Right, 0},
+		{ft_handler_pad_up, XK_Up, 0},
+		{ft_handler_pad_down, XK_Down, 0}};
 
 	if (sizeof(keycodes_f) / sizeof(t_keycode_f) != NBR_KEY_HOOKS)
 		ft_error_exit(1, (char*[]){INVALID_KEYS_HOOKS_NBR}, EXIT_FAILURE);
@@ -72,20 +72,29 @@ int					ft_handler_keys(int keycode, void *param)
 	i = ~0;
 	if (!keycodes_f)
 		keycodes_f = ft_get_keycodes_f();
+	printf("Calling keycode handler: %d\n", keycode);
+
 	while (++i < NBR_KEY_HOOKS)
 	{
 		if (keycodes_f[i].keycode == keycode)
 		{
 			keycodes_f[i].used = 1;
+
 			break ;
 		}
 	}
+
+
+
+
 	i = 0;
 	_bool = 0;
 	while (i < NBR_KEY_HOOKS)
 	{
-		if (keycodes_f[i].used && (_bool = 1))
+		if (keycodes_f[i].used && (_bool = 1)) {
 			keycodes_f[i].f(param);
+
+		}
 		if (++i == NBR_KEY_HOOKS && !_bool)
 			break ;
 	}
