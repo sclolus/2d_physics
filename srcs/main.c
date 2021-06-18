@@ -850,11 +850,23 @@ void	init_univers(univers *univers)
 	/* univers->time_ratio = 1; */
 }
 
+static double	framerate = 0.0f;
+
+void	draw_frame_counter() {
+	static char buffer[256];
+
+	snprintf(buffer, sizeof(buffer) - 1, "fps: %lf", framerate);
+	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 250, 0xFFFFFF, buffer);
+}
+
 int	draw_stuff()
 {
 	static time_t old = 0;
 	static time_t last_time = 0;
 	static time_t new = 0;
+
+	static double	current_second = 0;
+	static uint32_t	frame_count  = 0;
 	static univers	univers = {
 		0,
 		NULL,
@@ -877,6 +889,8 @@ int	draw_stuff()
 	}
 	new = clock();
 	double elapsed_time = (double)(new - last_time) / (double)CLOCKS_PER_SEC * g_univers->time_ratio;
+	current_second += elapsed_time;
+	
 
 	/* const double	angle = ROTATIONS_PER_SEC * (elapsed_time * g_univers->time_ratio); */
 	/* struct folding_rotation rotation = { */
@@ -901,6 +915,15 @@ int	draw_stuff()
 	mlx_put_image_to_window(g_mlx_data.connector, g_mlx_data.win, g_frame.frame, 0, 0);
 
 	draw_univers_hud(&univers);
+	draw_frame_counter();
+	frame_count++;
+
+	if (current_second >= 1.0f) {
+		framerate = (double)frame_count / current_second;
+		frame_count = 0;
+		current_second = 0.0f;
+	}
+	
 	old = new;
 	return (1);
 }
