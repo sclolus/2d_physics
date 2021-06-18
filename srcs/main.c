@@ -962,8 +962,9 @@ int	draw_stuff()
 		last_time = old;
 	}
 	new = clock();
-	double elapsed_time = (double)(new - last_time) / (double)CLOCKS_PER_SEC * g_univers->time_ratio;
-	current_second += elapsed_time;
+	double real_elapsed_time = (double)(new - last_time) / (double)CLOCKS_PER_SEC
+	double elapsed_time =  real_elapsed_time * g_univers->time_ratio;
+	current_second += real_elapsed_time;
 	
 
 	/* const double	angle = ROTATIONS_PER_SEC * (elapsed_time * g_univers->time_ratio); */
