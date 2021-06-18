@@ -63,6 +63,17 @@ typedef void* t_mlx_ptr;
 
 # define ENUM_STRING(x) (#x)
 
+#define max(a,b)				\
+	({ __typeof__ (a) _a = (a);		\
+	__typeof__ (b) _b = (b);	\
+	_a > _b ? _a : _b; }) // should go in my libft
+
+#define min(a,b)						\
+			     ({ __typeof__ (a) _a = (a);	\
+			     __typeof__ (b) _b = (b);	\
+			_a < _b ? _a : _b; }) // should go in my libft
+
+
 typedef struct	s_color_set
 {
 	int	color_min;
@@ -230,6 +241,7 @@ void	init_univers(univers *univers);
 void	univers_remove_object(univers *univers, uint32_t index);
 void	univers_add_object(univers *univers, object object);
 void	univers_map_objects(univers *univers, void (*lambda)(object *obj, void *private), void *private);
+void	univers_map_objects_threaded(univers *univers, void (*lambda)(object *obj, void *private), void *private);
 void	univers_map_2d_objects(univers *univers, void (*lambda)(object *a, object *b, void *private), void *private);
 void	object_reset_forces(object *object, void *private);
 /*
@@ -290,6 +302,13 @@ void			ft_draw_lines(t_mlx_ptr connector, t_mlx_win win
 int				ft_draw_lines_hook(void *param);
 int32_t			ft_line_clipping(t_line *tmp);
 void			ft_swap_t_point_in_line(t_line *line);
+
+
+/*
+** Pthread work
+*/
+
+# define THREAD_NUMBER 24
 
 /*
 ** Pthread drawing

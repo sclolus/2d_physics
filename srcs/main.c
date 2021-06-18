@@ -616,13 +616,13 @@ void	univers_apply_elapsed_time(univers *univers, double elapsed_time)
 	symetry_axis = vector2d_sub(symetry_point, screen_center);
 
 
-	univers_map_objects(univers, &apply_elapsed_time_wrapper, &elapsed_time);
-	univers_map_objects(univers, &color_object, NULL);
+	univers_map_objects_threaded(univers, &apply_elapsed_time_wrapper, &elapsed_time);
+	univers_map_objects_threaded(univers, &color_object, NULL);
 	
-	univers_map_objects(univers, &lifetime_update, &elapsed_time);
+	univers_map_objects_threaded(univers, &lifetime_update, &elapsed_time);
 	univers->lifetime += elapsed_time;
 	
-	univers_map_objects(univers, &particle_death, univers);
+	univers_map_objects_threaded(univers, &particle_death, univers);
 	univers_respawn_dead_particles(univers);
 	univers_map_2d_objects(univers, &apply_collision, univers);
 }
@@ -635,8 +635,18 @@ void	apply_acceleration(object *object, void *private)
 
 void	univers_apply_acceleration(univers *univers)
 {
-	univers_map_objects(univers, &apply_acceleration, NULL);
+	univers_map_objects_threaded(univers, &apply_acceleration, NULL);
 }
+
+
+struct map_data {
+	void		(*lambda)(object *obj, void *private);
+	void		*private;
+	univers		*univers;
+	uint32_t	handle_offset;
+	uint32_t	handled_objects;
+};
+
 
 
 void	univers_map_objects(univers *univers, void (*lambda)(object *obj, void *private), void *private)
@@ -649,6 +659,70 @@ void	univers_map_objects(univers *univers, void (*lambda)(object *obj, void *pri
 		i++;
 	}
 }
+
+void	map_objects_threaded_lambda_wrapper(void *arg) {
+	struct map_data	*data = arg;
+	uint32_t	i = 0;
+	uint32_t	handle_offset = data->handle_offset;
+	uint32_t	handled_objects = data->handled_objects;
+
+
+	while (i < handled_objects) {
+		data->lambda(&data->univers->objects[i + handle_offset], data->private);
+		i++;
+	}
+}
+
+void	univers_map_objects_threaded(univers *univers, void (*lambda)(object *obj, void *private), void *private)
+{
+	static pthread_t					thread_tab[THREAD_NUMBER];
+	static struct map_data					pthread_data[THREAD_NUMBER];
+	uint64_t						i = 0;
+	uint32_t						handled_objects = 0;
+	const uint32_t						handle_step = univers->nbr_objects / THREAD_NUMBER;
+
+	while (handled_objects < univers->nbr_objects)
+	{
+		uint32_t unbalanced = 0;
+
+		if (i + 1 == THREAD_NUMBER) {
+			unbalanced = univers->nbr_objects % THREAD_NUMBER;
+		}
+	
+			
+		pthread_data[i] = (struct map_data){
+			.lambda = lambda,
+			.private = private,
+			.univers = univers,
+			.handle_offset = handled_objects,
+			.handled_objects = handle_step + unbalanced,
+		};
+
+		handled_objects += pthread_data[i].handled_objects;
+		i++;
+	}
+
+
+	i = 0;
+	while (i < THREAD_NUMBER)
+	{
+		if (pthread_create(thread_tab + i, NULL,
+				   map_objects_threaded_lambda_wrapper,
+				   pthread_data + i))
+			ft_error_exit(1, (char*[]){ERR_PTHREAD_FAIL}, EXIT_FAILURE);
+		i++;
+	}
+
+	void		*return_status;
+
+	i = 0;
+	while (i < THREAD_NUMBER)
+	{
+		pthread_join(thread_tab[i], &return_status);
+		i++;
+	}
+}
+
 
 void univers_map_2d_objects(univers *univers, void (*lambda)(object *a, object *b, void *private), void *private)
 {
@@ -709,7 +783,7 @@ void	apply_gravity_wrapper(object *a, object *b, void *private)
 
 void	univers_apply_gravity(univers *univers)
 {
-	univers_map_objects(univers, &object_reset_forces, NULL);
+	univers_map_objects_threaded(univers, &object_reset_forces, NULL);
 	univers_map_2d_objects(univers, &apply_gravity_wrapper, NULL);
 }
 
@@ -741,7 +815,7 @@ void	draw_object_wrapper(object *object, void *private)
 
 void	draw_univers(univers *univers)
 {
-	univers_map_objects(univers, &draw_object_wrapper, NULL);
+	univers_map_objects_threaded(univers, &draw_object_wrapper, NULL);
 }
 
 static void	trajectory_predicate(int32_t x, int32_t y, void *private)
