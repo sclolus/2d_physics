@@ -226,6 +226,7 @@ typedef struct	s_univers {
 	uint32_t	current_follow;
 	double		time_ratio;
 	double		lifetime;
+	pthread_mutex_t objects_mutex;
 }				univers;
 
 extern univers	   *g_univers;
@@ -236,6 +237,8 @@ extern uint8_t	   g_global_alpha;
 extern bool		   symetry_on;
 
 # define ROTATIONS_PER_SEC 0.6 * 2 * M_PI
+
+object	random_particle(void);
 
 void	init_univers(univers *univers);
 void	univers_remove_object(univers *univers, uint32_t index);

@@ -618,11 +618,11 @@ void	univers_apply_elapsed_time(univers *univers, double elapsed_time)
 
 	univers_map_objects_threaded(univers, &apply_elapsed_time_wrapper, &elapsed_time);
 	univers_map_objects_threaded(univers, &color_object, NULL);
-	
+
 	univers_map_objects_threaded(univers, &lifetime_update, &elapsed_time);
 	univers->lifetime += elapsed_time;
-	
-	univers_map_objects_threaded(univers, &particle_death, univers);
+
+	univers_map_objects(univers, &particle_death, univers);
 	univers_respawn_dead_particles(univers);
 	univers_map_2d_objects(univers, &apply_collision, univers);
 }
@@ -653,11 +653,15 @@ void	univers_map_objects(univers *univers, void (*lambda)(object *obj, void *pri
 {
 	uint32_t i = 0;
 
+
+	assert(0 == pthread_mutex_lock(&univers->objects_mutex));
 	while (i < univers->nbr_objects)
 	{
 		lambda(&univers->objects[i], private);
 		i++;
 	}
+	assert(0 == pthread_mutex_unlock(&univers->objects_mutex));
+
 }
 
 void	map_objects_threaded_lambda_wrapper(void *arg) {
@@ -680,6 +684,9 @@ void	univers_map_objects_threaded(univers *univers, void (*lambda)(object *obj, 
 	uint64_t						i = 0;
 	uint32_t						handled_objects = 0;
 	const uint32_t						handle_step = univers->nbr_objects / THREAD_NUMBER;
+
+
+	assert(0 == pthread_mutex_lock(&univers->objects_mutex));
 
 	while (handled_objects < univers->nbr_objects)
 	{
@@ -721,12 +728,16 @@ void	univers_map_objects_threaded(univers *univers, void (*lambda)(object *obj, 
 		pthread_join(thread_tab[i], &return_status);
 		i++;
 	}
+
+	assert(0 == pthread_mutex_unlock(&univers->objects_mutex));
 }
 
 
 void univers_map_2d_objects(univers *univers, void (*lambda)(object *a, object *b, void *private), void *private)
 {
 	uint32_t	i = 0;
+	assert(0 == pthread_mutex_lock(&univers->objects_mutex));
+	
 	object		*objects = univers->objects;
 
 	assert(objects);
@@ -741,6 +752,8 @@ void univers_map_2d_objects(univers *univers, void (*lambda)(object *a, object *
 		}
 		i++;
 	}
+
+	assert(0 == pthread_mutex_unlock(&univers->objects_mutex));
 }
 
 
@@ -789,14 +802,21 @@ void	univers_apply_gravity(univers *univers)
 
 void	univers_remove_object(univers *univers, uint32_t index)
 {
+	assert(0 == pthread_mutex_lock(&univers->objects_mutex));
+
 	if (index != univers->nbr_objects - 1)
 		memmove(univers->objects + index, univers->objects + index + 1, (univers->nbr_objects - index - 1) * sizeof(object));
 	univers->nbr_objects--;
+
+	assert(0 == pthread_mutex_unlock(&univers->objects_mutex));
 }
 
 void	univers_add_object(univers *univers, object object)
 {
+	assert(0 == pthread_mutex_lock(&univers->objects_mutex));
+
 	uint32_t nbr_objects = univers->nbr_objects;
+	
 	if (univers->objects == NULL)
 	{
 		univers->nbr_objects = 0;
@@ -804,7 +824,9 @@ void	univers_add_object(univers *univers, object object)
 	}
 	univers->objects = realloc(univers->objects, sizeof(struct s_object) * (nbr_objects + 1));
 	univers->objects[nbr_objects] = object;
+		
 	univers->nbr_objects++;
+	assert(0 == pthread_mutex_unlock(&univers->objects_mutex));
 }
 
 void	draw_object_wrapper(object *object, void *private)
@@ -921,6 +943,13 @@ void	init_univers(univers *univers)
 	univers->cam.x = 0;
 	univers->cam.y = 0;
 	univers->scaling_factor = BASE_SCALING_FACTOR;
+	pthread_mutexattr_t Attr;
+
+	pthread_mutexattr_init(&Attr);
+	pthread_mutexattr_settype(&Attr, PTHREAD_MUTEX_RECURSIVE);
+
+	
+	pthread_mutex_init(&univers->objects_mutex, &Attr);
 	/* univers->time_ratio = 1; */
 }
 
@@ -951,6 +980,7 @@ int	draw_stuff()
 		.scaling_factor = BASE_SCALING_FACTOR,
 		.time_ratio = 1,
 		.current_follow = 0,
+		.objects_mutex = PTHREAD_MUTEX_INITIALIZER,
 	};
 
 
@@ -958,11 +988,13 @@ int	draw_stuff()
 	if (old == 0) {
 		g_univers = &univers;
 		init_univers(&univers);
+		printf("[Initialized univers]\n");
+				
 		old = clock();
 		last_time = old;
 	}
 	new = clock();
-	double real_elapsed_time = (double)(new - last_time) / (double)CLOCKS_PER_SEC
+	double real_elapsed_time = (double)(new - last_time) / (double)CLOCKS_PER_SEC;
 	double elapsed_time =  real_elapsed_time * g_univers->time_ratio;
 	current_second += real_elapsed_time;
 	
@@ -986,7 +1018,7 @@ int	draw_stuff()
 	/* g_univers->cam.x -= ((float)WINDOW_WIDTH / (g_univers->scaling_factor * 2.0)); */
 	/* g_univers->cam.y -= ((float)WINDOW_HEIGHT / (g_univers->scaling_factor * 2.0)); */
 	draw_univers(&univers);
-	draw_trajectory(&univers.objects[univers.current_follow]);
+//	draw_trajectory(&univers.objects[univers.current_follow]);
 	mlx_put_image_to_window(g_mlx_data.connector, g_mlx_data.win, g_frame.frame, 0, 0);
 
 	draw_univers_hud(&univers);
