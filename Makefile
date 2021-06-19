@@ -54,6 +54,10 @@ ifeq ($(debug),yes)
 	CC_FLAGS +=  -g3 -fsanitize=address # -fsanitize-blacklist=my_ignores.txt
 endif
 
+ifeq ($(profile),yes)
+	CC_FLAGS += -pg
+endif
+
 MLX_PATH=./minilibx-linux/
 LIBFT_PATH=./libft/
 FLAGS=  -isystem /usr/include -L$(MLX_PATH)  -I$(MLX_PATH) -lm -lmlx -L$(LIBFT_PATH) -lft -I$(HDR_PATH) -I./includes -lGL -lX11  -lXext  -lpthread # -framework OpenGL -framework AppKit 

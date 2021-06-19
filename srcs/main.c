@@ -15,7 +15,7 @@
 
 static t_mlx_data g_mlx_data;
 static t_image_frame g_frame;
-univers				*g_univers;
+universe				*g_universe;
 
 double	clamp(double x, double min, double max);
 
@@ -33,7 +33,7 @@ void	rectangle_map(t_rectangle rec, void (*lambda)(int32_t x, int32_t y, void *p
 	}
 }
 
-bool		symetry_on = true;
+bool		symetry_on = false;
 t_2d_vector	symetry_axis = {
 	.x = (double)WINDOW_WIDTH,
 	.y = (double)WINDOW_HEIGHT,
@@ -88,12 +88,12 @@ inline __attribute__((always_inline)) void pixel_put(int32_t x, int32_t y, uint3
 static void	circle_predicate(int32_t x, int32_t y, void *private)
 {
 	object *obj = ((object*)private);
-	double scaling_factor = g_univers->scaling_factor;
+	double scaling_factor = g_universe->scaling_factor;
 
 	assert(obj->kind == CIRCLE || obj->kind == ATTRACTOR);
 
-	double f_x = (double)x / (scaling_factor) + g_univers->cam.x;
-	double f_y = (double)y / (scaling_factor) + g_univers->cam.y;
+	double f_x = (double)x / (scaling_factor) + g_universe->cam.x;
+	double f_y = (double)y / (scaling_factor) + g_universe->cam.y;
 
 	double dx = (obj->pos.x - f_x);
 	double dy = (obj->pos.y - f_y);
@@ -109,12 +109,12 @@ void	draw_circle(object *obj)
 
 	assert(obj->kind == CIRCLE || obj->kind == ATTRACTOR);
 
-	double scaling_factor = g_univers->scaling_factor;
+	double scaling_factor = g_universe->scaling_factor;
 	double delta = obj->circle.radius;
-	min_x = obj->pos.x - delta - g_univers->cam.x;
-	min_y = obj->pos.y - delta - g_univers->cam.y;
-	max_x = obj->pos.x + delta - g_univers->cam.x;
-	max_y = obj->pos.y + delta - g_univers->cam.y;
+	min_x = obj->pos.x - delta - g_universe->cam.x;
+	min_y = obj->pos.y - delta - g_universe->cam.y;
+	max_x = obj->pos.x + delta - g_universe->cam.x;
+	max_y = obj->pos.y + delta - g_universe->cam.y;
 
 	min_x *= scaling_factor;
 	min_y *= scaling_factor;
@@ -132,7 +132,7 @@ void	draw_circle(object *obj)
 		},
 	};
 	/* printf("object is in (%lf, %lf)\n", obj->pos.x, obj->pos.y); */
-	/* printf("object is in (%lf, %lf) relative to the camera\n", obj->pos.x - g_univers->cam.x, obj->pos.y - g_univers->cam.y); */
+	/* printf("object is in (%lf, %lf) relative to the camera\n", obj->pos.x - g_universe->cam.x, obj->pos.y - g_universe->cam.y); */
 	/* printf("after  clamping .min.x  = %lf, y = %lf .max = %lf, .y = %lf\n", test.min.x, test.min.y, test.max.x, test.max.y); */
 
 	rectangle_map(rec, &circle_predicate, obj);
@@ -149,7 +149,7 @@ static void line_predicate(int32_t x, int32_t y, void *private)
 	assert(obj->kind == LINE);
 	double c = obj->pos.x * obj->line.dir.x + obj->pos.y * obj->line.dir.y;
 	double a, b;
-	const double scaling_factor = g_univers->scaling_factor;
+	const double scaling_factor = g_universe->scaling_factor;
 	const double epsilon = clamp(1 / scaling_factor, 0.0, 1);
 
 	a = obj->line.dir.x;
@@ -158,8 +158,8 @@ static void line_predicate(int32_t x, int32_t y, void *private)
 	double f_x = (double)x / scaling_factor;
 	double f_y = (double)y / scaling_factor;
 
-	f_x += g_univers->cam.x;
-	f_y += g_univers->cam.y;
+	f_x += g_universe->cam.x;
+	f_y += g_universe->cam.y;
 
 	/* f_x *= scaling_factor; */
 	/* f_y *= scaling_factor; */
@@ -374,25 +374,25 @@ void apply_gravity(object *obj, object *attractor)
 
 uint32_t	collisions_number = 0;
 
-void	draw_univers_hud(univers *univers)
+void	draw_universe_hud(universe *universe)
 {
 	static char buffer[256];
 
-	snprintf(buffer, sizeof(buffer) - 1, "objects: %u", univers->nbr_objects);
+	snprintf(buffer, sizeof(buffer) - 1, "objects: %u", universe->nbr_objects);
 	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 100, 0xFFFFFF, buffer);
 
-	t_2d_vector pos = univers->objects[univers->current_follow].pos;
+	t_2d_vector pos = universe->objects[universe->current_follow].pos;
 	snprintf(buffer, sizeof(buffer) - 1, "pos: .x = %lf .y = %lf", pos.x, pos.y);
 	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 115, 0xFFFFFF, buffer);
 
-	pos = univers->cam;
+	pos = universe->cam;
 	snprintf(buffer, sizeof(buffer) - 1, "pos: .x = %lf .y = %lf", pos.x, pos.y);
 	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 190, 0xFFFFFF, buffer);
 
-	snprintf(buffer, sizeof(buffer) - 1, ".scaling_factor: %lf", univers->scaling_factor);
+	snprintf(buffer, sizeof(buffer) - 1, ".scaling_factor: %lf", universe->scaling_factor);
 	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 130, 0xFFFFFF, buffer);
 
-	snprintf(buffer, sizeof(buffer) - 1, ".time_ratio: %lf", univers->time_ratio);
+	snprintf(buffer, sizeof(buffer) - 1, ".time_ratio: %lf", universe->time_ratio);
 	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 145, 0xFFFFFF, buffer);
 
 	snprintf(buffer, sizeof(buffer) - 1, ".collisions_number: %u", collisions_number);
@@ -401,11 +401,11 @@ void	draw_univers_hud(univers *univers)
 	snprintf(buffer, sizeof(buffer) - 1, ".alpha: %hhx", g_global_alpha);
 	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 175, 0xFFFFFF, buffer);
 
-	snprintf(buffer, sizeof(buffer) - 1, ".lifetime: %lf", univers->lifetime);
+	snprintf(buffer, sizeof(buffer) - 1, ".lifetime: %lf", universe->lifetime);
 	mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 205, 0xFFFFFF, buffer);
 
 
-	if (univers->objects[univers->current_follow].kind == LINE)
+	if (universe->objects[universe->current_follow].kind == LINE)
 	{		snprintf(buffer, sizeof(buffer) - 1, ".type: %s", ENUM_STRING(LINE));
 		mlx_string_put(g_mlx_data.connector, g_mlx_data.win, 50, 175, 0xFFFFFF, buffer);
 	}
@@ -427,8 +427,8 @@ bool	double_epsilon_eq(double a, double b, double epsilon)
 bool	circle_intersection(object *a, object *b)
 {
 	/* assert(a->kind == CIRCLE && b->kind == CIRCLE); */
-	/* double radius_a = (a->circle.radius/\*  * g_univers->scaling_factor *\/) * (a->circle.radius/\*  * g_univers->scaling_factor *\/); */
-	/* double radius_b = (b->circle.radius/\*  * g_univers->scaling_factor *\/) * (b->circle.radius/\*  * g_univers->scaling_factor *\/); */
+	/* double radius_a = (a->circle.radius/\*  * g_universe->scaling_factor *\/) * (a->circle.radius/\*  * g_universe->scaling_factor *\/); */
+	/* double radius_b = (b->circle.radius/\*  * g_universe->scaling_factor *\/) * (b->circle.radius/\*  * g_universe->scaling_factor *\/); */
 
 	/* double x_a = a->pos.x * a->pos.x; */
 	/* double y_a = a->pos.y * a->pos.y; */
@@ -503,7 +503,8 @@ void	apply_elapsed_time_wrapper(object *object, void *private)
 void	color_object(object *object, void *private)
 {
 	(void)private;
-	object->color = lerp(0.0, 100.0, vector2d_magnitude(object->velocity), 0xA, 0xFF) << 8;
+//	object->color = lerp(0.0, 100.0, vector2d_magnitude(object->velocity), 0xA, 0xFF) << 8;
+	object->color = 0xFF00;
 }
 
 void	lifetime_update(object *object, void *private)
@@ -516,18 +517,18 @@ void	lifetime_update(object *object, void *private)
 
 void	particle_death(object *object, void *private)
 {
-	univers *univers = private;
-	uint32_t index = (object - univers->objects) / sizeof(object);
+	universe *universe = private;
+	uint32_t index = (object - universe->objects) / sizeof(object);
 	
 	if (object->lifetime <= 0.0f) {
-		univers_remove_object(univers, index);
+		universe_remove_object(universe, index);
 	}
 }
 
 
 void	apply_collision(object *a, object *b, void *private)
 {
-	univers *univers = private;
+	universe *universe = private;
 	t_f_intersection	intersections[NBR_SHAPES][NBR_SHAPES] = {
 		{&circle_intersection, NULL, &circle_intersection, &circle_line_intersection, NULL},
 		{NULL, NULL, NULL, NULL, NULL},
@@ -536,7 +537,7 @@ void	apply_collision(object *a, object *b, void *private)
 		{NULL, NULL, NULL, NULL, NULL},
 	};
 
-	(void)univers;
+	(void)universe;
 
 	if (intersections[a->kind][b->kind] == NULL) {
 		dprintf(2, "Could not apply_collision because F_intersection_(%d,%d) does not exists\n", a->kind, b->kind);
@@ -544,7 +545,7 @@ void	apply_collision(object *a, object *b, void *private)
 	}
 	if (intersections[a->kind][b->kind](a, b))
 	{
-		/* g_univers->time_ratio = 0; */
+		/* g_universe->time_ratio = 0; */
 
 		collisions_number++;
 		/* a->circle.radius += b->circle.radius; */
@@ -554,14 +555,14 @@ void	apply_collision(object *a, object *b, void *private)
 
 		/* if (i < u) */
 		/* { */
-		/* 	univers_remove_object(univers, u); */
-		/* 	univers_remove_object(univers, i); */
+		/* 	universe_remove_object(universe, u); */
+		/* 	universe_remove_object(universe, i); */
 
 		/* } else { */
-		/* 	univers_remove_object(univers, i); */
-		/* 	univers_remove_object(univers, u); */
+		/* 	universe_remove_object(universe, i); */
+		/* 	universe_remove_object(universe, u); */
 		/* } */
-		/* printf("There are now %u objects\n", univers->nbr_objects); */
+		/* printf("There are now %u objects\n", universe->nbr_objects); */
 	}
 }
 
@@ -577,7 +578,7 @@ object	random_particle(void) {
 			/* .y = 0 + rand() % 2, */
 		},
 		.circle = {
-			.radius = 10 + (rand() * 3 / DEFAULT_OBJECT_NUMBER) % 60,
+			.radius = (10 + (rand() * 3 / DEFAULT_OBJECT_NUMBER) % 60) * 10,
 		},
 		.velocity = {
 			.x = 0,
@@ -599,32 +600,32 @@ object	random_particle(void) {
 
 }
 
-void	univers_respawn_dead_particles(univers *univers) {
-	uint32_t particles_to_spawn = DEFAULT_OBJECT_NUMBER - univers->nbr_objects;
+void	universe_respawn_dead_particles(universe *universe) {
+	uint32_t particles_to_spawn = DEFAULT_OBJECT_NUMBER - universe->nbr_objects;
 
 	for (uint32_t i = 0; i < particles_to_spawn; i++) {
 		
-		univers_add_object(univers, random_particle());
+		universe_add_object(universe, random_particle());
 	}
 }
 
-void	univers_apply_elapsed_time(univers *univers, double elapsed_time)
+void	universe_apply_elapsed_time(universe *universe, double elapsed_time)
 {
-	const double	angle = ROTATIONS_PER_SEC * (elapsed_time / g_univers->time_ratio);
+	const double	angle = ROTATIONS_PER_SEC * (elapsed_time / g_universe->time_ratio);
 	t_2d_vector	screen_center = vector2d_new((double)WINDOW_WIDTH / 2.0, (double)WINDOW_HEIGHT / 2.0);
 	symetry_point = vector2d_rotate(symetry_point, screen_center, angle);
 	symetry_axis = vector2d_sub(symetry_point, screen_center);
 
 
-	univers_map_objects_threaded(univers, &apply_elapsed_time_wrapper, &elapsed_time);
-	univers_map_objects_threaded(univers, &color_object, NULL);
+	universe_map_objects_threaded(universe, &apply_elapsed_time_wrapper, &elapsed_time);
+	universe_map_objects_threaded(universe, &color_object, NULL);
 
-	univers_map_objects_threaded(univers, &lifetime_update, &elapsed_time);
-	univers->lifetime += elapsed_time;
+	universe_map_objects_threaded(universe, &lifetime_update, &elapsed_time);
+	universe->lifetime += elapsed_time;
 
-	univers_map_objects(univers, &particle_death, univers);
-	univers_respawn_dead_particles(univers);
-	univers_map_2d_objects(univers, &apply_collision, univers);
+	universe_map_objects(universe, &particle_death, universe);
+	universe_respawn_dead_particles(universe);
+//	universe_map_2d_objects(universe, &apply_collision, universe);
 }
 
 void	apply_acceleration(object *object, void *private)
@@ -633,34 +634,34 @@ void	apply_acceleration(object *object, void *private)
 	object->acceleration = vector2d_scalar_divide(object->applied_forces, object->mass);
 }
 
-void	univers_apply_acceleration(univers *univers)
+void	universe_apply_acceleration(universe *universe)
 {
-	univers_map_objects_threaded(univers, &apply_acceleration, NULL);
+	universe_map_objects_threaded(universe, &apply_acceleration, NULL);
 }
 
 
 struct map_data {
 	void		(*lambda)(object *obj, void *private);
 	void		*private;
-	univers		*univers;
+	universe		*universe;
 	uint32_t	handle_offset;
 	uint32_t	handled_objects;
 };
 
 
 
-void	univers_map_objects(univers *univers, void (*lambda)(object *obj, void *private), void *private)
+void	universe_map_objects(universe *universe, void (*lambda)(object *obj, void *private), void *private)
 {
 	uint32_t i = 0;
 
 
-	assert(0 == pthread_mutex_lock(&univers->objects_mutex));
-	while (i < univers->nbr_objects)
+	assert(0 == pthread_mutex_lock(&universe->objects_mutex));
+	while (i < universe->nbr_objects)
 	{
-		lambda(&univers->objects[i], private);
+		lambda(&universe->objects[i], private);
 		i++;
 	}
-	assert(0 == pthread_mutex_unlock(&univers->objects_mutex));
+	assert(0 == pthread_mutex_unlock(&universe->objects_mutex));
 
 }
 
@@ -672,35 +673,36 @@ void	map_objects_threaded_lambda_wrapper(void *arg) {
 
 
 	while (i < handled_objects) {
-		data->lambda(&data->univers->objects[i + handle_offset], data->private);
+		data->lambda(&data->universe->objects[i + handle_offset], data->private);
 		i++;
 	}
 }
 
-void	univers_map_objects_threaded(univers *univers, void (*lambda)(object *obj, void *private), void *private)
+void	universe_map_objects_threaded(universe *universe, void (*lambda)(object *obj, void *private), void *private)
 {
 	static pthread_t					thread_tab[THREAD_NUMBER];
 	static struct map_data					pthread_data[THREAD_NUMBER];
 	uint64_t						i = 0;
 	uint32_t						handled_objects = 0;
-	const uint32_t						handle_step = univers->nbr_objects / THREAD_NUMBER;
 
 
-	assert(0 == pthread_mutex_lock(&univers->objects_mutex));
+	assert(0 == pthread_mutex_lock(&universe->objects_mutex));
+	const uint32_t						handle_step = universe->nbr_objects / THREAD_NUMBER;
 
-	while (handled_objects < univers->nbr_objects)
+
+	while (handled_objects < universe->nbr_objects)
 	{
 		uint32_t unbalanced = 0;
 
 		if (i + 1 == THREAD_NUMBER) {
-			unbalanced = univers->nbr_objects % THREAD_NUMBER;
+			unbalanced = universe->nbr_objects % THREAD_NUMBER;
 		}
 	
 			
 		pthread_data[i] = (struct map_data){
 			.lambda = lambda,
 			.private = private,
-			.univers = univers,
+			.universe = universe,
 			.handle_offset = handled_objects,
 			.handled_objects = handle_step + unbalanced,
 		};
@@ -729,22 +731,21 @@ void	univers_map_objects_threaded(univers *univers, void (*lambda)(object *obj, 
 		i++;
 	}
 
-	assert(0 == pthread_mutex_unlock(&univers->objects_mutex));
+	assert(0 == pthread_mutex_unlock(&universe->objects_mutex));
 }
 
 
-void univers_map_2d_objects(univers *univers, void (*lambda)(object *a, object *b, void *private), void *private)
+void universe_map_2d_objects(universe *universe, void (*lambda)(object *a, object *b, void *private), void *private)
 {
-	uint32_t	i = 0;
-	assert(0 == pthread_mutex_lock(&univers->objects_mutex));
-	
-	object		*objects = univers->objects;
+	assert(0 == pthread_mutex_lock(&universe->objects_mutex));
+	uint32_t	i = 0;	
+	object		*objects = universe->objects;
 
 	assert(objects);
-	while (i < univers->nbr_objects)
+	while (i < universe->nbr_objects)
 	{
 		uint32_t u = 0;
-		while (u < univers->nbr_objects)
+		while (u < universe->nbr_objects)
 		{
 			if (i != u)
 				lambda(&objects[i], &objects[u], private);
@@ -753,7 +754,92 @@ void univers_map_2d_objects(univers *univers, void (*lambda)(object *a, object *
 		i++;
 	}
 
-	assert(0 == pthread_mutex_unlock(&univers->objects_mutex));
+	assert(0 == pthread_mutex_unlock(&universe->objects_mutex));
+}
+
+struct map_2d_data {
+	void		(*lambda)(object *a, object *b, void *private);
+	void		*private;
+	universe		*universe;
+	uint32_t	handle_offset;
+	uint32_t	handled_objects_pairs;
+};
+
+void	map_2d_objects_threaded_lambda_wrapper(void *arg) {
+	struct map_2d_data	*data = arg;
+	universe			*universe = data->universe;
+	uint32_t		offset = data->handle_offset;
+
+	for (uint32_t i = 0; i < data->handled_objects_pairs; i++) {
+		object	*a = &universe->objects[i + offset];
+
+		for (uint32_t u = 0; u < universe->nbr_objects; u++) {
+			object	*b = &universe->objects[u];
+//			printf("Applying lambda to [%u] [%u]\n", i + offset, u);
+
+			if (i + offset != u)
+				data->lambda(a, b, data->private);
+		}
+	}
+}
+
+void universe_map_2d_objects_threaded(universe *universe, void (*lambda)(object *a, object *b, void *private), void *private)
+{
+	static pthread_t		thread_tab[THREAD_NUMBER];
+	static struct map_2d_data	pthread_data[THREAD_NUMBER];
+	uint64_t			i = 0;
+	uint32_t			handled_objects = 0;
+
+
+	assert(0 == pthread_mutex_lock(&universe->objects_mutex));
+	object			*objects = universe->objects;
+
+
+	const uint32_t		handle_step = universe->nbr_objects / THREAD_NUMBER;
+
+
+	while (handled_objects < universe->nbr_objects)
+	{
+		uint32_t unbalanced = 0;
+
+		if (i + 1 == THREAD_NUMBER) {
+			unbalanced = universe->nbr_objects % THREAD_NUMBER;
+		}
+	
+			
+		pthread_data[i] = (struct map_2d_data){
+			.lambda = lambda,
+			.private = private,
+			.universe = universe,
+			.handle_offset = handled_objects,
+			.handled_objects_pairs = handle_step + unbalanced,
+		};
+
+		handled_objects += pthread_data[i].handled_objects_pairs;
+		i++;
+	}
+
+
+		i = 0;
+	while (i < THREAD_NUMBER)
+	{
+		if (pthread_create(thread_tab + i, NULL,
+				   &map_2d_objects_threaded_lambda_wrapper,
+				   pthread_data + i))
+			ft_error_exit(1, (char*[]){ERR_PTHREAD_FAIL}, EXIT_FAILURE);
+		i++;
+	}
+
+	void		*return_status;
+
+	i = 0;
+	while (i < THREAD_NUMBER)
+	{
+		pthread_join(thread_tab[i], &return_status);
+		i++;
+	}
+
+	assert(0 == pthread_mutex_unlock(&universe->objects_mutex));
 }
 
 
@@ -794,39 +880,39 @@ void	apply_gravity_wrapper(object *a, object *b, void *private)
 	apply_gravity(a, b);
 }
 
-void	univers_apply_gravity(univers *univers)
+void	universe_apply_gravity(universe *universe)
 {
-	univers_map_objects_threaded(univers, &object_reset_forces, NULL);
-	univers_map_2d_objects(univers, &apply_gravity_wrapper, NULL);
+	universe_map_objects_threaded(universe, &object_reset_forces, NULL);
+	universe_map_2d_objects_threaded(universe, &apply_gravity_wrapper, NULL);
 }
 
-void	univers_remove_object(univers *univers, uint32_t index)
+void	universe_remove_object(universe *universe, uint32_t index)
 {
-	assert(0 == pthread_mutex_lock(&univers->objects_mutex));
+	assert(0 == pthread_mutex_lock(&universe->objects_mutex));
 
-	if (index != univers->nbr_objects - 1)
-		memmove(univers->objects + index, univers->objects + index + 1, (univers->nbr_objects - index - 1) * sizeof(object));
-	univers->nbr_objects--;
+	if (index != universe->nbr_objects - 1)
+		memmove(universe->objects + index, universe->objects + index + 1, (universe->nbr_objects - index - 1) * sizeof(object));
+	universe->nbr_objects--;
 
-	assert(0 == pthread_mutex_unlock(&univers->objects_mutex));
+	assert(0 == pthread_mutex_unlock(&universe->objects_mutex));
 }
 
-void	univers_add_object(univers *univers, object object)
+void	universe_add_object(universe *universe, object object)
 {
-	assert(0 == pthread_mutex_lock(&univers->objects_mutex));
+	assert(0 == pthread_mutex_lock(&universe->objects_mutex));
 
-	uint32_t nbr_objects = univers->nbr_objects;
+	uint32_t nbr_objects = universe->nbr_objects;
 	
-	if (univers->objects == NULL)
+	if (universe->objects == NULL)
 	{
-		univers->nbr_objects = 0;
-		assert(univers->objects = malloc(sizeof(object)));
+		universe->nbr_objects = 0;
+		assert(universe->objects = malloc(sizeof(object)));
 	}
-	univers->objects = realloc(univers->objects, sizeof(struct s_object) * (nbr_objects + 1));
-	univers->objects[nbr_objects] = object;
+	universe->objects = realloc(universe->objects, sizeof(struct s_object) * (nbr_objects + 1));
+	universe->objects[nbr_objects] = object;
 		
-	univers->nbr_objects++;
-	assert(0 == pthread_mutex_unlock(&univers->objects_mutex));
+	universe->nbr_objects++;
+	assert(0 == pthread_mutex_unlock(&universe->objects_mutex));
 }
 
 void	draw_object_wrapper(object *object, void *private)
@@ -835,9 +921,9 @@ void	draw_object_wrapper(object *object, void *private)
 	draw_object(object);
 }
 
-void	draw_univers(univers *univers)
+void	draw_universe(universe *universe)
 {
-	univers_map_objects_threaded(univers, &draw_object_wrapper, NULL);
+	universe_map_objects_threaded(universe, &draw_object_wrapper, NULL);
 }
 
 static void	trajectory_predicate(int32_t x, int32_t y, void *private)
@@ -853,7 +939,7 @@ static void	trajectory_predicate(int32_t x, int32_t y, void *private)
 	{
 		apply_elapsed_time(&copy, epsilon);
 		if (vector2d_distance(copy.pos, (t_2d_vector){.x = (double)x, .y = (double)y}) <= copy.circle.radius / 4)
-			pixel_put(x + g_univers->cam.x, + g_univers->cam.y, 0xFF0000);
+			pixel_put(x + g_universe->cam.x, + g_universe->cam.y, 0xFF0000);
 		iter++;
 	}
 }
@@ -870,7 +956,7 @@ double	clamp(double x, double min, double max)
 
 void	draw_trajectory(object *object)
 {
-	t_2d_vector cam_dist = vector2d_sub(g_univers->cam, object->pos);
+	t_2d_vector cam_dist = vector2d_sub(g_universe->cam, object->pos);
 	t_rectangle rec = {
 		.min = cam_dist,
 		.max = cam_dist,
@@ -885,7 +971,7 @@ void	draw_trajectory(object *object)
 	while (iter > 0)
 	{
 		apply_elapsed_time(&copy, epsilon);
-		cam_dist = vector2d_sub(g_univers->cam, copy.pos);
+		cam_dist = vector2d_sub(g_universe->cam, copy.pos);
 		double x = cam_dist.x;
 		double y = cam_dist.y;
 
@@ -902,7 +988,7 @@ void	draw_trajectory(object *object)
 	rectangle_map(rec, &trajectory_predicate, object);
 }
 
-void	init_univers(univers *univers)
+void	init_universe(universe *universe)
 {
 	struct s_object object =  {
 		.color = 0xFFFF,
@@ -933,24 +1019,24 @@ void	init_univers(univers *univers)
 	};
 
 	(void)object;
-	/* univers_add_object(univers, object); */
+	/* universe_add_object(universe, object); */
 
 	for (uint32_t i = 0; i < DEFAULT_OBJECT_NUMBER; i++) {
-		univers_add_object(univers, random_particle());
+		universe_add_object(universe, random_particle());
 	}
 
 	collisions_number = 0;
-	univers->cam.x = 0;
-	univers->cam.y = 0;
-	univers->scaling_factor = BASE_SCALING_FACTOR;
+	universe->cam.x = 0;
+	universe->cam.y = 0;
+	universe->scaling_factor = BASE_SCALING_FACTOR;
 	pthread_mutexattr_t Attr;
 
 	pthread_mutexattr_init(&Attr);
 	pthread_mutexattr_settype(&Attr, PTHREAD_MUTEX_RECURSIVE);
 
 	
-	pthread_mutex_init(&univers->objects_mutex, &Attr);
-	/* univers->time_ratio = 1; */
+	pthread_mutex_init(&universe->objects_mutex, &Attr);
+	/* universe->time_ratio = 1; */
 }
 
 static double	framerate = 0.0f;
@@ -970,7 +1056,7 @@ int	draw_stuff()
 
 	static double	current_second = 0;
 	static uint32_t	frame_count  = 0;
-	static univers	univers = {
+	static universe	universe = {
 		0,
 		NULL,
 		{
@@ -986,42 +1072,42 @@ int	draw_stuff()
 
 	memset(g_frame.buffer, 0, WINDOW_WIDTH * WINDOW_HEIGHT * 4);
 	if (old == 0) {
-		g_univers = &univers;
-		init_univers(&univers);
-		printf("[Initialized univers]\n");
+		g_universe = &universe;
+		init_universe(&universe);
+		printf("[Initialized universe]\n");
 				
 		old = clock();
 		last_time = old;
 	}
 	new = clock();
 	double real_elapsed_time = (double)(new - last_time) / (double)CLOCKS_PER_SEC;
-	double elapsed_time =  real_elapsed_time * g_univers->time_ratio;
+	double elapsed_time =  real_elapsed_time * g_universe->time_ratio;
 	current_second += real_elapsed_time;
 	
 
-	/* const double	angle = ROTATIONS_PER_SEC * (elapsed_time * g_univers->time_ratio); */
+	/* const double	angle = ROTATIONS_PER_SEC * (elapsed_time * g_universe->time_ratio); */
 	/* struct folding_rotation rotation = { */
 	/* 	.angle = angle, */
 	/* }; */
 
-	/* univers_map_objects(g_univers, &objects_folding_rotation, (void *)&rotation); */
+	/* universe_map_objects(g_universe, &objects_folding_rotation, (void *)&rotation); */
 
-	univers_apply_elapsed_time(&univers, elapsed_time);
-	univers_apply_gravity(&univers);
-	univers_apply_acceleration(&univers);
+	universe_apply_elapsed_time(&universe, elapsed_time);
+	universe_apply_gravity(&universe);
+	universe_apply_acceleration(&universe);
 
 	(void)elapsed_time;
 	last_time = new;
 	if (new - old < CLOCK_FRAME_DELTA)
 		return 0;
-	/* g_univers->cam = g_univers->objects[g_univers->current_follow].pos; */
-	/* g_univers->cam.x -= ((float)WINDOW_WIDTH / (g_univers->scaling_factor * 2.0)); */
-	/* g_univers->cam.y -= ((float)WINDOW_HEIGHT / (g_univers->scaling_factor * 2.0)); */
-	draw_univers(&univers);
-//	draw_trajectory(&univers.objects[univers.current_follow]);
+	/* g_universe->cam = g_universe->objects[g_universe->current_follow].pos; */
+	/* g_universe->cam.x -= ((float)WINDOW_WIDTH / (g_universe->scaling_factor * 2.0)); */
+	/* g_universe->cam.y -= ((float)WINDOW_HEIGHT / (g_universe->scaling_factor * 2.0)); */
+	draw_universe(&universe);
+//	draw_trajectory(&universe.objects[universe.current_follow]);
 	mlx_put_image_to_window(g_mlx_data.connector, g_mlx_data.win, g_frame.frame, 0, 0);
 
-	draw_univers_hud(&univers);
+	draw_universe_hud(&universe);
 	draw_frame_counter();
 	frame_count++;
 

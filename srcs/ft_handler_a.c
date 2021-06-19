@@ -15,13 +15,13 @@
 void	ft_handler_r(void *param)
 {
 	(void)param;
-	free(g_univers->objects);
-	g_univers->nbr_objects = 0;
-	g_univers->objects = NULL;
-	double	scaling_factor = g_univers->scaling_factor;
-	init_univers(g_univers);
+	free(g_universe->objects);
+	g_universe->nbr_objects = 0;
+	g_universe->objects = NULL;
+	double	scaling_factor = g_universe->scaling_factor;
+	init_universe(g_universe);
 
-	g_univers->scaling_factor = scaling_factor;
+	g_universe->scaling_factor = scaling_factor;
 }
 
 void	ft_handler_m(void *param)
@@ -29,8 +29,8 @@ void	ft_handler_m(void *param)
 	uint32_t	random_index;
 
 	(void)param;
-	random_index = rand() % g_univers->nbr_objects;
+	random_index = rand() % g_universe->nbr_objects;
 
-	g_univers->cam = g_univers->objects[random_index].pos;
-	g_univers->current_follow = random_index;
+	g_universe->cam = g_universe->objects[random_index].pos;
+	g_universe->current_follow = random_index;
 }

@@ -15,5 +15,5 @@
 void	ft_handler_left(void *param)
 {
 	(void)param;
-	g_univers->time_ratio /= 2.0;
+	g_universe->time_ratio /= 2.0;
 }

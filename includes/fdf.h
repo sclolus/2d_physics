@@ -57,7 +57,7 @@ typedef void* t_mlx_ptr;
 # define GRAVITATIONAL_CONSTANT (6.674 / 100000000000.0)
 # define SCALING_FACTOR_FACTOR 1.3
 # define BASE_SCALING_FACTOR /* 0.03 */ 0.03
-# define DEFAULT_OBJECT_NUMBER 300
+# define DEFAULT_OBJECT_NUMBER 3000
 
 # define ABS(x) (x < 0 ? -x : x)
 
@@ -218,7 +218,7 @@ typedef struct s_object {
 
 typedef bool (*t_f_intersection)(object *a, object *b);
 
-typedef struct	s_univers {
+typedef struct	s_universe {
 	uint32_t	nbr_objects;
 	object		*objects;
 	t_2d_vector	cam;
@@ -227,9 +227,9 @@ typedef struct	s_univers {
 	double		time_ratio;
 	double		lifetime;
 	pthread_mutex_t objects_mutex;
-}				univers;
+}				universe;
 
-extern univers	   *g_univers;
+extern universe	   *g_universe;
 extern t_2d_vector symetry_point;
 extern t_2d_vector symetry_axis;
 extern t_2d_vector defining_point;
@@ -240,12 +240,12 @@ extern bool		   symetry_on;
 
 object	random_particle(void);
 
-void	init_univers(univers *univers);
-void	univers_remove_object(univers *univers, uint32_t index);
-void	univers_add_object(univers *univers, object object);
-void	univers_map_objects(univers *univers, void (*lambda)(object *obj, void *private), void *private);
-void	univers_map_objects_threaded(univers *univers, void (*lambda)(object *obj, void *private), void *private);
-void	univers_map_2d_objects(univers *univers, void (*lambda)(object *a, object *b, void *private), void *private);
+void	init_universe(universe *universe);
+void	universe_remove_object(universe *universe, uint32_t index);
+void	universe_add_object(universe *universe, object object);
+void	universe_map_objects(universe *universe, void (*lambda)(object *obj, void *private), void *private);
+void	universe_map_objects_threaded(universe *universe, void (*lambda)(object *obj, void *private), void *private);
+void	universe_map_2d_objects(universe *universe, void (*lambda)(object *a, object *b, void *private), void *private);
 void	object_reset_forces(object *object, void *private);
 /*
 ** Mem_block handling

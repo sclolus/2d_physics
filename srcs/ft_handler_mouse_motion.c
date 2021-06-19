@@ -2,12 +2,12 @@
 
 int	ft_handler_mouse_motion(int x, int y, void *param)
 {
-	univers	*univers = g_univers;
+	universe	*universe = g_universe;
 
 	(void)param;
 	(void)x;
 	(void)y;
-	(void)univers;
+	(void)universe;
 	/* 	symetry_point = (t_2d_vector) { */
 	/* 	.x = (double)x, */
 	/* 	.y = (double)y, */
@@ -18,9 +18,9 @@ int	ft_handler_mouse_motion(int x, int y, void *param)
 	/* 	.y = (double)y - symetry_point.y, */
 	/* }; */
 	printf("handler_mouse_motion\n");
-	/* univers->objects[0].pos = (t_2d_vector){ */
-	/* 	.x = (float)x + univers->cam.x, */
-	/* 	.y = (float)y + univers->cam.y, */
+	/* universe->objects[0].pos = (t_2d_vector){ */
+	/* 	.x = (float)x + universe->cam.x, */
+	/* 	.y = (float)y + universe->cam.y, */
 	/* }; */
 	return 0;
 }

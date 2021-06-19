@@ -2,13 +2,13 @@
 
 int	ft_handler_mouse(int button, int x, int y, void *private)
 {
-	double scaling_factor = g_univers->scaling_factor;
+	double scaling_factor = g_universe->scaling_factor;
 	object object = /*  =  { */
 	/* 	.color = 0x0, */
 	/* 	.kind = ATTRACTOR, */
 	/* 	.pos = { */
-	/* 		.x = (x / scaling_factor + g_univers->cam.x), */
-	/* 		.y = (y / scaling_factor + g_univers->cam.y), */
+	/* 		.x = (x / scaling_factor + g_universe->cam.x), */
+	/* 		.y = (y / scaling_factor + g_universe->cam.y), */
 	/* 	}, */
 	/* 	.attractor = { */
 	/* 		.radius = 200, */
@@ -33,13 +33,13 @@ int	ft_handler_mouse(int button, int x, int y, void *private)
 
 
 	object.pos = (t_2d_vector){
-			.x = (x / scaling_factor + g_univers->cam.x),
-			.y = (y / scaling_factor + g_univers->cam.y),
+			.x = (x / scaling_factor + g_universe->cam.x),
+			.y = (y / scaling_factor + g_universe->cam.y),
 	};
 	(void)button;
 	(void)private;
 
-	univers_add_object(g_univers, object);
+	universe_add_object(g_universe, object);
 	printf("Exited ft_handler_mouse \n");
 	return 0;
 }

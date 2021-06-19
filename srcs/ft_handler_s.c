@@ -15,7 +15,7 @@
 void	ft_handler_s(void *param)
 {
 	(void)param;
-	object *object = &g_univers->objects[g_univers->current_follow];
+	object *object = &g_universe->objects[g_universe->current_follow];
 
 	object_reset_forces(object, NULL);
 }
