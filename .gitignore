@@ -3,3 +3,7 @@
 **/#*#
 **/*.a
 **/*.gch
+
+# Added by cargo
+
+/target
