@@ -51,12 +51,12 @@ fn main() {
 	    Event::Input(Input::Button(ButtonArgs {
 		state: ButtonState::Press,
 		button: Keyboard(Key::Down),
-		scancode: _}), _) => zoom *= 2.0,
+		scancode: _}), _) => zoom /= 2.0,
 
 	    Event::Input(Input::Button(ButtonArgs {
 		state: ButtonState::Press,
 		button: Keyboard(Key::Up),
-		scancode: _}), _) => zoom /= 2.0,
+		scancode: _}), _) => zoom *= 2.0,
 
 	    _ => ()
 	}
@@ -65,21 +65,15 @@ fn main() {
 	universe = universe.apply_gravity();
 	
         window.draw_2d(&event, |context, graphics, _device| {
-            clear([1.0; 4], graphics);
+            clear([0.0; 4], graphics);
 
 	    for object in universe.objects.iter() {
-		let mut position_rectangle = object.position_rectangle();
-		position_rectangle = [
-		    position_rectangle[0] / zoom,
-		    position_rectangle[1] / zoom,
-		    position_rectangle[2] / zoom,
-		    position_rectangle[3] / zoom,
-		];
+		let ellipse_geometry = graphics::ellipse::circle(object.pos[0] * zoom, object.pos[1] * zoom, object.radius * zoom);
 		
-		rectangle(object.rectangle().color,
-			  position_rectangle,
-			  context.transform,
-			  graphics);
+		ellipse(object.rectangle().color,
+		       ellipse_geometry,
+			context.transform,
+			graphics);
 	    }
         });
     }

@@ -15,9 +15,9 @@ type Vec2 = Vector2<f64>;
 
 #[derive(Clone, Copy)]
 pub struct Object {
-    radius: f64,
+    pub radius: f64,
     mass: f64,
-    pos: Vec2,
+    pub    pos: Vec2,
     velocity: Vec2,
     acceleration: Vec2,
     force: Vec2,
