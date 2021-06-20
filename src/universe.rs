@@ -72,12 +72,12 @@ impl Universe {
     }
 
     pub fn speed_up(&mut self) -> &mut Self {
-	self.time_ratio *= 1.2;
+	self.time_ratio *= 1.05;
 	self
     }
 
     pub fn slow_down(&mut self) -> &mut Self {
-	self.time_ratio /= 1.2;
+	self.time_ratio /= 1.05;
 	self
     }
 

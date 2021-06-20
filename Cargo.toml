@@ -7,8 +7,12 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-piston2d-graphics = "0.40.0"
 piston_window = "*"
 piston = "0.53.0"
 rand = "*"
 cgmath = "*"
+find_folder = "*"
+
+[dependencies.piston2d-graphics]
+version = "0.40.0"
+features = ["glyph_cache_rusttype"]

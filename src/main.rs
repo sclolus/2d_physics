@@ -17,6 +17,7 @@ use universe::Universe;
 use object::Object;
 
 use cgmath::prelude::*;
+use rand::Rng;
 
 use std::time::{Instant, Duration};
 
@@ -29,7 +30,7 @@ fn main() {
     let size = window.size();
 
     let object_number = 10;
-    
+    let mut rng = rand::thread_rng();    
     let mut universe = Universe::new(window.size(), object_number);
 
     let mut old_time = Instant::now();
@@ -41,7 +42,7 @@ fn main() {
     }
 
     impl Camera {
-	const ZOOM_SPEED: f64 = 1.1;
+	const ZOOM_SPEED: f64 = 1.05;
 	fn initial_camera_pos(size: piston_window::Size) -> Vector2<f64> {
 	    // let half_width = size.width as f64;
 	    // let half_height = size.height as f64;
@@ -105,8 +106,11 @@ fn main() {
 	    let box_contains = |a: (Vec2, Vec2), b: (Vec2, Vec2)| { a.0.x < b.0.x && a.0.y < b.0.y
 								    && a.1.x > b.1.x && a.1.y > b.1.y};
 
+	    const ZOOM_SMOOTHNESS: f64 = 1.0001;
+
 	    while !box_contains(camera_box, box_to_bound) {
-		self.dezoom();
+		//		self.dezoom();
+		self.zoom /= ZOOM_SMOOTHNESS;
 
 		width = size.width / self.zoom;  
 		height = size.height / self.zoom;
@@ -120,7 +124,8 @@ fn main() {
 	    }
 	    
 	    while box_contains(camera_box, box_to_bound) {
-		self.zoom();
+		//self.zoom();
+		self.zoom *= ZOOM_SMOOTHNESS;
 
 		width = size.width / self.zoom;  
 		height = size.height / self.zoom;
@@ -133,7 +138,8 @@ fn main() {
 			      Vector2::new(self.pos.x + half_width, self.pos.y + half_height));
 	    }
 
-	    self.dezoom(); // This dance of zooming-dezooming seemed like the simpliest way to find the (almost-)minimum bouding camera box
+	    //	    self.dezoom(); // This dance of zooming-dezooming seemed like the simpliest way to find the (almost-)minimum bouding camera box
+	    self.zoom /= ZOOM_SMOOTHNESS;
 	}
     }
 
@@ -146,6 +152,15 @@ fn main() {
     let half_height = size.height as f64 / 2.0;
 
     let mut keep_camera_zoomed_to_universe_bounding_box = false;
+    let mut cam_following = false;
+    let mut object_followed = 0;
+	
+
+    let assets = find_folder::Search::ParentsThenKids(3, 3)
+        .for_folder("assets").unwrap();
+    let ref font = assets.join("OpenSans-Semibold.ttf");
+    
+    let mut glyphs = window.load_font(font).unwrap();
 
     while let Some(event) = window.next() {
 	let elapsed_time = old_time.elapsed().as_secs_f64();
@@ -180,10 +195,11 @@ fn main() {
 		Key::S => { cam.move_down(); },
 		Key::D => { cam.move_right(); },
 		Key::B => { keep_camera_zoomed_to_universe_bounding_box ^= true; keys_pressed.remove(&Key::B); }
+		Key::M => { cam_following ^= true; object_followed = rng.gen_range(0..universe.objects.len()); keys_pressed.remove(&Key::M); },
 		_ => (),
 	    }
 	}
-    
+	
 
 	let time_ratio = universe.time_ratio; // Okay technically time_ratio could have been updated in the keyboard match, and that would be wrong to use it as the time_ratio for the current frame. But the universe update and keyboard events should be separated anyway.
 
@@ -196,9 +212,50 @@ fn main() {
 	    
 	    cam.zoom_to_bounding_box(size, min, max);
 	}
+
+	if cam_following {
+	    cam.pos = universe.objects[object_followed].pos;
+	}
 	
-        window.draw_2d(&event, |context, graphics, _device| {
+	use graphics::text;
+
+	let text = Text::new_color([1.0, 1.0, 1.0, 1.0], 16);
+	
+	
+	window.draw_2d(&event, |context, graphics, _device| {
             clear([0.0; 4], graphics);
+
+	    let time_ratio_text = format!("time_ratio: {:.10}", time_ratio);
+	    text.draw(&time_ratio_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 20.0), graphics);
+
+	    let zoom = format!("zoom: {:.10}", cam.zoom);
+	    text.draw(&zoom, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 40.0), graphics);
+
+	    let cam_pos = format!("cam pos: ({}, {})", cam.pos.x, cam.pos.y);
+	    text.draw(&cam_pos, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 60.0), graphics);
+
+	    let number_of_objects_text = format!("number of objects: {})", universe.objects.len());
+	    text.draw(&number_of_objects_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 80.0), graphics);
+
+	    let bounding_text = format!("bounding: {}", keep_camera_zoomed_to_universe_bounding_box);
+	    text.draw(&bounding_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 100.0), graphics);
+
+	    let following_text = format!("following: {}", cam_following);
+	    text.draw(&following_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 120.0), graphics);
+
+	    let v = universe.objects[object_followed].velocity;
+	    
+	    let followed_object_velocity_text = format!("followed object velocity: ({:.10}, {:.10})", v.x, v.y);
+	    text.draw(&followed_object_velocity_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 140.0), graphics);
+	    
+	    let a = universe.objects[object_followed].acceleration;
+
+	    let followed_object_acceleration_text = format!("followed object acceleration: ({:.10}, {:.10})", a.x, a.y);
+	    text.draw(&followed_object_acceleration_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 160.0), graphics);
+
+
+
+	    glyphs.factory.encoder.flush(_device);
 
 	    for object in universe.objects.iter() {
 		let pos = Vector2::new(object.pos[0], object.pos[1]);
@@ -218,6 +275,7 @@ fn main() {
 			context.transform,
 			graphics);
 	    }
-        });
+	});
     }
+
 }

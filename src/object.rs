@@ -18,8 +18,8 @@ pub struct Object {
     pub radius: f64,
     mass: f64,
     pub    pos: Vec2,
-    velocity: Vec2,
-    acceleration: Vec2,
+    pub velocity: Vec2,
+    pub acceleration: Vec2,
     force: Vec2,
 }
 
