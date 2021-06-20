@@ -37,46 +37,65 @@ fn main() {
     }
 
     impl Camera {
+	const ZOOM_SPEED: f64 = 1.1;
+	fn initial_camera_pos(size: piston_window::Size) -> Vector2<f64> {
+	    // let half_width = size.width as f64;
+	    // let half_height = size.height as f64;
+
+	    // Vector2::new(-half_width, -half_height)
+	    Vector2::new(0.0, 0.0)
+	}
+	
 	pub fn new(size: piston_window::Size) -> Self {
 	    Camera {
 		zoom: 1.0,
-		pos: Vector2::new(size.width / 2.0, size.height / 2.0),
-		movement_speed: 100.0,
+		pos: Self::initial_camera_pos(size),
+		movement_speed: 10.0,
 	    }
 	}
 
+	pub fn reset_pos(&mut self, size: piston_window::Size) {
+	    self.pos = Self::initial_camera_pos(size);
+	}
+
 	pub fn zoom(&mut self) -> &mut Self {
-	    self.zoom *= 2.0;
+	    self.zoom *= Self::ZOOM_SPEED;
 	    self
 	}
 
 	pub fn dezoom(&mut self) -> &mut Self {
-	    self.zoom /= 2.0;
+	    self.zoom /= Self::ZOOM_SPEED;
 	    self
 	}
 
 	pub fn move_up(&mut self) -> &mut Self {
-	    self.pos -= Vector2::new(0.0, self.movement_speed);
+	    self.pos -= Vector2::new(0.0, self.movement_speed) * self.zoom.exp();
 	    self
 	}
 	
 	pub fn move_down(&mut self) -> &mut Self {
-	    self.pos += Vector2::new(0.0, self.movement_speed);
+	    self.pos += Vector2::new(0.0, self.movement_speed) * self.zoom.exp();
 	    self
 	}
 
 	pub fn move_left(&mut self) -> &mut Self {
-	    self.pos -= Vector2::new(self.movement_speed, 0.0);
+	    self.pos -= Vector2::new(self.movement_speed, 0.0) * self.zoom.exp();
 	    self
 	}
 
 	pub fn move_right(&mut self) -> &mut Self {
-	    self.pos += Vector2::new(self.movement_speed, 0.0);
+	    self.pos += Vector2::new(self.movement_speed, 0.0) * self.zoom.exp();
 	    self
 	}
     }
 
+    use std::collections::BTreeSet;
+    
     let mut cam = Camera::new(size);
+    let mut keys_pressed: BTreeSet<Key> = BTreeSet::new();
+
+    let half_width = size.width as f64 / 2.0;
+    let half_height = size.height as f64 / 2.0;
 
     while let Some(event) = window.next() {
 	let elapsed_time = old_time.elapsed().as_secs_f64();
@@ -84,26 +103,36 @@ fn main() {
 
 	use piston::Button::Keyboard;
 
+	
 	match event {
 	    Event::Input(Input::Button(ButtonArgs {
 		state: ButtonState::Press,
 		button: Keyboard(key),
 		scancode: _}), _) => {
-		match key {
-		    Key::R => { universe = universe.reset(); },
-		    Key::Left => { universe.slow_down(); },
-		    Key::Right => { universe.speed_up(); },
-		    Key::Down => { cam.dezoom(); },
-		    Key::Up => { cam.zoom(); },
-		    Key::W => { cam.move_up(); },
-		    Key::A => { cam.move_left(); },
-		    Key::S => { cam.move_down(); },
-		    Key::D => { cam.move_right(); },
-		    _ => (),
-		}
-	    }
+		keys_pressed.insert(key);
+	    },
+	    Event::Input(Input::Button(ButtonArgs {
+		state: ButtonState::Release,
+		button: Keyboard(key),
+		scancode: _}), _) => { keys_pressed.remove(&key) ; },
 	    _ => ()
 	}
+
+	for key in keys_pressed.clone().iter() {
+	    match key {
+		Key::R => { universe = universe.reset(); cam.reset_pos(size); keys_pressed.remove(&Key::R); },
+		Key::Left => { universe.slow_down(); },
+		Key::Right => { universe.speed_up(); },
+		Key::Down => { cam.dezoom(); },
+		Key::Up => { cam.zoom(); },
+		Key::W => { cam.move_up(); },
+		Key::A => { cam.move_left(); },
+		Key::S => { cam.move_down(); },
+		Key::D => { cam.move_right(); },
+		_ => (),
+	    }
+	}
+    
 
 	let time_ratio = universe.time_ratio; // Okay technically time_ratio could have been updated in the keyboard match, and that would be wrong to use it as the time_ratio for the current frame. But the universe update and keyboard events should be separated anyway.
 
@@ -117,7 +146,17 @@ fn main() {
             clear([0.0; 4], graphics);
 
 	    for object in universe.objects.iter() {
-		let ellipse_geometry = graphics::ellipse::circle((object.pos[0] - cam.pos.x) * cam.zoom, (object.pos[1] - cam.pos.y) * cam.zoom, object.radius * cam.zoom);
+		let pos = Vector2::new(object.pos[0], object.pos[1]);
+		let half_vector = Vector2::new(half_width, half_height);
+		let pos_relative_to_camera = pos - cam.pos;
+
+		let zoomed_position = pos_relative_to_camera * cam.zoom;
+		let centered_position = zoomed_position + half_vector;
+		let final_pos = centered_position;
+		
+		let ellipse_geometry = graphics::ellipse::circle(final_pos.x,
+								 final_pos.y,
+								 object.radius * cam.zoom);
 		
 		ellipse(object.rectangle().color,
 			ellipse_geometry,

@@ -12,10 +12,13 @@ pub struct Universe {
 impl Universe {    
     fn populate(&mut self, number_of_particles: u64) {
 	let mut objects = Vec::new();
+	let half_width = self.window_size.width as f64;
+	let half_height = self.window_size.height as f64;
+	
 	for _ in 0..number_of_particles {
 	    objects.push(Object::random_object(10.0..50.0,
 					       1e15..1e20,
-					       [0.0..self.window_size.width, 0.0..self.window_size.height],
+					       [-half_width..half_width, -half_height..half_height],
 					       [0.0..30.0, 0.0..30.0],
 					       [0.0..30.0, 0.0..30.0]))
 	}
