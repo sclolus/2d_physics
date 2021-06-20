@@ -5,22 +5,42 @@ pub const GRAVITATIONAL_CONSTANT: f64 = 6.67430e-11f64;
 
 pub struct Universe {
     pub objects: Vec<Object>,
+    pub time_ratio: f64,
+    pub window_size: piston_window::Size, // Yeah that's ugly, but fuck it, I'll fix that later
 }
 
-impl Universe {
-    pub fn new(size: piston_window::Size, number_of_particles: u64) -> Self {
+impl Universe {    
+    fn populate(&mut self, number_of_particles: u64) {
 	let mut objects = Vec::new();
 	for _ in 0..number_of_particles {
 	    objects.push(Object::random_object(10.0..50.0,
 					       1e15..1e20,
-					       [0.0..size.width, 0.0..size.height],
+					       [0.0..self.window_size.width, 0.0..self.window_size.height],
 					       [0.0..30.0, 0.0..30.0],
 					       [0.0..30.0, 0.0..30.0]))
 	}
+
+	self.objects = objects;
+    }
 	
-	Universe {
-	    objects: objects,
-	}
+    pub fn new(size: piston_window::Size, number_of_particles: u64) -> Self {	
+	let mut universe = Universe {
+	    objects: Vec::new(),
+	    time_ratio: 1.0,
+	    window_size: size,
+	};
+
+	universe.populate(number_of_particles);
+	universe
+    }
+
+    pub fn reset(mut self) -> Self {
+	use std::convert::TryInto;
+	
+	let number_of_particles = self.objects.len();
+	
+	self.populate(number_of_particles.try_into().unwrap());
+	self
     }
 
     pub fn apply_elapsed_time(mut self, elapsed_time: f64) -> Self {
@@ -46,4 +66,15 @@ impl Universe {
 	}
 	self
     }
+
+    pub fn speed_up(&mut self) -> &mut Self {
+	self.time_ratio *= 2.0;
+	self
+    }
+
+    pub fn slow_down(&mut self) -> &mut Self {
+	self.time_ratio /= 2.0;
+	self
+    }
+
 }
