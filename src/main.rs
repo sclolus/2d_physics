@@ -5,6 +5,9 @@ extern crate piston;
 // extern crate cgmath;
 use cgmath;
 
+use cgmath::Vector2;
+type Vec2 = Vector2<f64>;
+
 use piston_window::*;
 
 mod universe;
@@ -14,7 +17,6 @@ use universe::Universe;
 use object::Object;
 
 use cgmath::prelude::*;
-use cgmath::Vector2;
 
 use std::time::{Instant, Duration};
 
@@ -25,8 +27,10 @@ fn main() {
         WindowSettings::new("Hello Piston!", [640, 480])
         .exit_on_esc(true).build().unwrap();
     let size = window.size();
+
+    let object_number = 10;
     
-    let mut universe = Universe::new(window.size(), 300);
+    let mut universe = Universe::new(window.size(), object_number);
 
     let mut old_time = Instant::now();
 
@@ -87,6 +91,50 @@ fn main() {
 	    self.pos += Vector2::new(self.movement_speed, 0.0) * self.zoom.exp();
 	    self
 	}
+
+	pub fn zoom_to_bounding_box(&mut self, size: piston_window::Size, min: Vec2, max: Vec2) {
+	    let mut width = size.width / self.zoom;
+	    let mut height = size.height / self.zoom;
+
+	    let mut half_width = width / 2.0;
+	    let mut half_height = height / 2.0;
+	    
+	    let box_to_bound = (min, max);
+	    let mut camera_box = (Vector2::new(self.pos.x - half_width, self.pos.y - half_height),
+				  Vector2::new(self.pos.x + half_width, self.pos.y + half_height));
+	    let box_contains = |a: (Vec2, Vec2), b: (Vec2, Vec2)| { a.0.x < b.0.x && a.0.y < b.0.y
+								    && a.1.x > b.1.x && a.1.y > b.1.y};
+
+	    while !box_contains(camera_box, box_to_bound) {
+		self.dezoom();
+
+		width = size.width / self.zoom;  
+		height = size.height / self.zoom;
+                
+		half_width = width / 2.0;        
+		half_height = height / 2.0;      		
+
+		
+		camera_box = (Vector2::new(self.pos.x - half_width, self.pos.y - half_height),
+			      Vector2::new(self.pos.x + half_width, self.pos.y + half_height));
+	    }
+	    
+	    while box_contains(camera_box, box_to_bound) {
+		self.zoom();
+
+		width = size.width / self.zoom;  
+		height = size.height / self.zoom;
+                
+		half_width = width / 2.0;        
+		half_height = height / 2.0;      		
+
+		
+		camera_box = (Vector2::new(self.pos.x - half_width, self.pos.y - half_height),
+			      Vector2::new(self.pos.x + half_width, self.pos.y + half_height));
+	    }
+
+	    self.dezoom(); // This dance of zooming-dezooming seemed like the simpliest way to find the (almost-)minimum bouding camera box
+	}
     }
 
     use std::collections::BTreeSet;
@@ -96,6 +144,8 @@ fn main() {
 
     let half_width = size.width as f64 / 2.0;
     let half_height = size.height as f64 / 2.0;
+
+    let mut keep_camera_zoomed_to_universe_bounding_box = false;
 
     while let Some(event) = window.next() {
 	let elapsed_time = old_time.elapsed().as_secs_f64();
@@ -129,6 +179,7 @@ fn main() {
 		Key::A => { cam.move_left(); },
 		Key::S => { cam.move_down(); },
 		Key::D => { cam.move_right(); },
+		Key::B => { keep_camera_zoomed_to_universe_bounding_box ^= true; keys_pressed.remove(&Key::B); }
 		_ => (),
 	    }
 	}
@@ -140,7 +191,11 @@ fn main() {
 	universe = universe.apply_gravity();
 
 
-
+	if keep_camera_zoomed_to_universe_bounding_box {
+	    let (min, max) = universe.bounding_box();
+	    
+	    cam.zoom_to_bounding_box(size, min, max);
+	}
 	
         window.draw_2d(&event, |context, graphics, _device| {
             clear([0.0; 4], graphics);
@@ -156,7 +211,7 @@ fn main() {
 		
 		let ellipse_geometry = graphics::ellipse::circle(final_pos.x,
 								 final_pos.y,
-								 object.radius * cam.zoom);
+								 (object.radius * cam.zoom).max(1.0));
 		
 		ellipse(object.rectangle().color,
 			ellipse_geometry,

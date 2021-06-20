@@ -1,6 +1,7 @@
 use crate::object::Object;
 
-
+use cgmath::Vector2;
+type Vec2 = Vector2<f64>;
 pub const GRAVITATIONAL_CONSTANT: f64 = 6.67430e-11f64;
 
 pub struct Universe {
@@ -12,11 +13,11 @@ pub struct Universe {
 impl Universe {    
     fn populate(&mut self, number_of_particles: u64) {
 	let mut objects = Vec::new();
-	let half_width = self.window_size.width as f64;
-	let half_height = self.window_size.height as f64;
+	let half_width = self.window_size.width as f64 * 100.0;
+	let half_height = self.window_size.height as f64 * 100.0;
 	
 	for _ in 0..number_of_particles {
-	    objects.push(Object::random_object(10.0..50.0,
+	    objects.push(Object::random_object(100.0..500.0,
 					       1e15..1e20,
 					       [-half_width..half_width, -half_height..half_height],
 					       [0.0..30.0, 0.0..30.0],
@@ -25,7 +26,7 @@ impl Universe {
 
 	self.objects = objects;
     }
-	
+    
     pub fn new(size: piston_window::Size, number_of_particles: u64) -> Self {	
 	let mut universe = Universe {
 	    objects: Vec::new(),
@@ -71,13 +72,25 @@ impl Universe {
     }
 
     pub fn speed_up(&mut self) -> &mut Self {
-	self.time_ratio *= 2.0;
+	self.time_ratio *= 1.2;
 	self
     }
 
     pub fn slow_down(&mut self) -> &mut Self {
-	self.time_ratio /= 2.0;
+	self.time_ratio /= 1.2;
 	self
+    }
+
+    pub fn bounding_box(&self) -> (Vec2, Vec2) {
+	let mut min = Vec2::new(f64::MAX, f64::MAX);
+	let mut max = Vec2::new(f64::MIN, f64::MIN);
+
+	for object in self.objects.iter() {
+	    min = Vec2::new(object.pos.x.min(min.x), object.pos.y.min(min.y));
+	    max = Vec2::new(object.pos.x.max(max.x), object.pos.y.max(max.y));
+	}
+
+	(min, max)
     }
 
 }
