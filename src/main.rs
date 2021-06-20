@@ -22,10 +22,11 @@ fn main() {
         WindowSettings::new("Hello Piston!", [640, 480])
         .exit_on_esc(true).build().unwrap();
     
-    let mut universe = Universe::new(window.size(), 2);
+    let mut universe = Universe::new(window.size(), 300);
 
     let mut old_time = Instant::now();
     let mut time_ratio = 1.0;
+    let mut zoom = 1.0;
 
     while let Some(event) = window.next() {
 	let elapsed_time = old_time.elapsed().as_secs_f64();
@@ -38,7 +39,7 @@ fn main() {
 	    Event::Input(Input::Button(ButtonArgs {
 		state: ButtonState::Press,
 		button: Keyboard(Key::R),
-		scancode: _}), _) => universe = Universe::new(window.size(), 2),
+		scancode: _}), _) => universe = Universe::new(window.size(), 300),
 	    Event::Input(Input::Button(ButtonArgs {
 		state: ButtonState::Press,
 		button: Keyboard(Key::Left),
@@ -46,7 +47,17 @@ fn main() {
 		Event::Input(Input::Button(ButtonArgs {
 		state: ButtonState::Press,
 		button: Keyboard(Key::Right),
-		scancode: _}), _) => time_ratio *= 2.0,
+		    scancode: _}), _) => time_ratio *= 2.0,
+	    Event::Input(Input::Button(ButtonArgs {
+		state: ButtonState::Press,
+		button: Keyboard(Key::Down),
+		scancode: _}), _) => zoom *= 2.0,
+
+	    Event::Input(Input::Button(ButtonArgs {
+		state: ButtonState::Press,
+		button: Keyboard(Key::Up),
+		scancode: _}), _) => zoom /= 2.0,
+
 	    _ => ()
 	}
 
@@ -57,8 +68,16 @@ fn main() {
             clear([1.0; 4], graphics);
 
 	    for object in universe.objects.iter() {
+		let mut position_rectangle = object.position_rectangle();
+		position_rectangle = [
+		    position_rectangle[0] / zoom,
+		    position_rectangle[1] / zoom,
+		    position_rectangle[2] / zoom,
+		    position_rectangle[3] / zoom,
+		];
+		
 		rectangle(object.rectangle().color,
-			  object.position_rectangle(),
+			  position_rectangle,
 			  context.transform,
 			  graphics);
 	    }
