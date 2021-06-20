@@ -34,30 +34,20 @@ fn main() {
 
 	use piston::Button::Keyboard;
 
-	
 	match event {
 	    Event::Input(Input::Button(ButtonArgs {
 		state: ButtonState::Press,
-		button: Keyboard(Key::R),
-		scancode: _}), _) => universe = Universe::new(window.size(), 300),
-	    Event::Input(Input::Button(ButtonArgs {
-		state: ButtonState::Press,
-		button: Keyboard(Key::Left),
-			scancode: _}), _) => time_ratio /= 2.0,
-		Event::Input(Input::Button(ButtonArgs {
-		state: ButtonState::Press,
-		button: Keyboard(Key::Right),
-		    scancode: _}), _) => time_ratio *= 2.0,
-	    Event::Input(Input::Button(ButtonArgs {
-		state: ButtonState::Press,
-		button: Keyboard(Key::Down),
-		scancode: _}), _) => zoom /= 2.0,
-
-	    Event::Input(Input::Button(ButtonArgs {
-		state: ButtonState::Press,
-		button: Keyboard(Key::Up),
-		scancode: _}), _) => zoom *= 2.0,
-
+		button: Keyboard(key),
+		scancode: _}), _) => {
+		match key {
+		    Key::R => universe = Universe::new(window.size(), 300),
+		    Key::Left => time_ratio /= 2.0,
+		    Key::Right => time_ratio *= 2.0,
+		    Key::Down => zoom /= 2.0,
+		    Key::Up => zoom *= 2.0,
+		    _ => (),
+		}
+	    }
 	    _ => ()
 	}
 
@@ -71,7 +61,7 @@ fn main() {
 		let ellipse_geometry = graphics::ellipse::circle(object.pos[0] * zoom, object.pos[1] * zoom, object.radius * zoom);
 		
 		ellipse(object.rectangle().color,
-		       ellipse_geometry,
+			ellipse_geometry,
 			context.transform,
 			graphics);
 	    }
