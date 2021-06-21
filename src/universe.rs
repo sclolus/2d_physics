@@ -17,7 +17,9 @@ impl Universe {
 	let universe_range_multiplier = 2e10;
 	let half_width = self.window_size.width as f64 * universe_range_multiplier;
 	let half_height = self.window_size.height as f64 * universe_range_multiplier;
-	let mass_range = 1e15..1e42;
+
+	let mass_multiplier = 1e1;
+	let mass_range = 1e15 * mass_multiplier ..1e42 * mass_multiplier;
 
 	let radius_multiplier = 1_000_000.0;
 	let radius_range = 1.0 * radius_multiplier..5.0 * radius_multiplier;

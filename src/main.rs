@@ -2,8 +2,11 @@ use graphics::*;
 
 extern crate piston_window;
 extern crate piston;
+extern crate cpal;
 // extern crate cgmath;
 use cgmath;
+
+use cpal::traits::{HostTrait, DeviceTrait, StreamTrait};
 
 use cgmath::Vector2;
 type Vec2 = Vector2<f64>;
@@ -18,7 +21,15 @@ use universe::Universe;
 use rand::Rng;
 
 use std::time::Instant;
+use std::sync::Mutex;
 
+use lazy_static::lazy_static;
+
+lazy_static!{
+    static ref target_note: Mutex<f32> = Mutex::new(440.0);
+    static ref sample_count: Mutex<usize> = Mutex::new(0);
+    static ref notes: Mutex<[(f32, f32); 300]> = Mutex::new([(0.0, 0.0); 300]);
+}
 
 fn main() {
     let mut window: PistonWindow =
@@ -172,128 +183,210 @@ fn main() {
     
     let mut glyphs = window.load_font(font).unwrap();
 
-    while let Some(event) = window.next() {
-	let elapsed_time = old_time.elapsed().as_secs_f64();
-	old_time = Instant::now();
+	let host = cpal::default_host();
+	let output_device = host.default_output_device().expect("No default output device found");
+	let mut supported_configs_range = output_device.supported_output_configs()
+	.expect("error while querying configs");
 
-	use piston::Button::Keyboard;
 
-	
-	match event {
-	    Event::Input(Input::Button(ButtonArgs {
-		state: ButtonState::Press,
-		button: Keyboard(key),
-		scancode: _}), _) => {
-		keys_pressed.insert(key);
+    
+    let supported_config = supported_configs_range.next()
+	    .expect("no supported config?!")
+	    .with_sample_rate(cpal::SampleRate(44100));
+
+    let sample_rate = supported_config.sample_rate();
+
+    println!("Initializing output device with {} samplerate", sample_rate.0);
+    let config = supported_config.config();
+
+    let mut sound_multiplier = 1.0;
+    
+
+    use std::f32::consts::PI;
+
+    {
+	let mut output_stream = output_device.build_output_stream(
+	    &config,
+	    move |data: &mut [f32], _: _| {
+		let length = data.len();
+		let secs_per_sample = 1.0 / sample_rate.0 as f32;
+
+//		println!("Target note: {}", target_note);
+		let total_wave = 2.0 * PI * *target_note.lock().unwrap();
+		let wave_step = total_wave / sample_rate.0 as f32;
+		
+		for (i, sample) in data.iter_mut().enumerate() {
+		    *sample = 0.0;
+		    for (amplitude, note) in notes.lock().unwrap().iter() {
+			let total_wave = 2.0 * PI * note;
+			let wave_step = total_wave / sample_rate.0 as f32;
+			*sample += (wave_step * (i + *sample_count.lock().unwrap()) as f32).sin() * amplitude;
+			
+		    }
+		    *sample /= notes.lock().unwrap().len() as f32;
+		}
+		*sample_count.lock().unwrap() += length;
 	    },
-	    Event::Input(Input::Button(ButtonArgs {
-		state: ButtonState::Release,
-		button: Keyboard(key),
-		scancode: _}), _) => { keys_pressed.remove(&key) ; },
-	    _ => ()
-	}
+	    move |err| {
+	    }).expect("Could not create output_stream");
 
-	for key in keys_pressed.clone().iter() {
-	    match key {
-		Key::R => { universe = universe.reset(); cam.reset_pos(); keys_pressed.remove(&Key::R); },
-		Key::Left => { universe.slow_down(); },
-		Key::Right => { universe.speed_up(); },
-		Key::Down => { cam.dezoom(); },
-		Key::Up => { cam.zoom(); },
-		Key::W => { cam.move_up(); },
-		Key::A => { cam.move_left(); },
-		Key::S => { cam.move_down(); },
-		Key::D => { cam.move_right(); },
-		Key::B => { keep_camera_zoomed_to_universe_bounding_box ^= true; keys_pressed.remove(&Key::B); }
-		Key::M => { cam_following ^= true; object_followed = rng.gen_range(0..universe.objects.len()); keys_pressed.remove(&Key::M); },
-		_ => (),
+	output_stream.play().unwrap();
+
+
+	
+
+	while let Some(event) = window.next() {
+	    let elapsed_time = old_time.elapsed().as_secs_f64();
+	    old_time = Instant::now();
+
+	    use piston::Button::Keyboard;
+
+	    
+	    match event {
+		Event::Input(Input::Button(ButtonArgs {
+		    state: ButtonState::Press,
+		    button: Keyboard(key),
+		    scancode: _}), _) => {
+		    keys_pressed.insert(key);
+		},
+		Event::Input(Input::Button(ButtonArgs {
+		    state: ButtonState::Release,
+		    button: Keyboard(key),
+		    scancode: _}), _) => { keys_pressed.remove(&key) ; },
+		_ => ()
 	    }
-	}
-	
 
-	let time_ratio = universe.time_ratio; // Okay technically time_ratio could have been updated in the keyboard match, and that would be wrong to use it as the time_ratio for the current frame. But the universe update and keyboard events should be separated anyway.
+	    for key in keys_pressed.clone().iter() {
+		match key {
+		    Key::R => { universe = universe.reset(); cam.reset_pos(); keys_pressed.remove(&Key::R); },
+		    Key::Left => { universe.slow_down(); },
+		    Key::Right => { universe.speed_up(); },
+		    Key::Down => { cam.dezoom(); },
+		    Key::Up => { cam.zoom(); },
+		    Key::W => { cam.move_up(); },
+		    Key::A => { cam.move_left(); },
+		    Key::S => { cam.move_down(); },
+		    Key::D => { cam.move_right(); },
+		    Key::B => { keep_camera_zoomed_to_universe_bounding_box ^= true; keys_pressed.remove(&Key::B); }
+		    Key::M => { cam_following ^= true; object_followed = rng.gen_range(0..universe.objects.len()); keys_pressed.remove(&Key::M); },
+		    Key::U => {
+			let mut note = target_note.lock().unwrap();
 
-	universe = universe.apply_elapsed_time(elapsed_time * time_ratio);
-	universe = universe.apply_gravity();
-
-
-	if keep_camera_zoomed_to_universe_bounding_box {
-	    let (min, max) = universe.bounding_box();
-	    
-	    cam.zoom_to_bounding_box(size, min, max);
-	}
-
-	if cam_following {
-	    cam.pos = universe.objects[object_followed].pos;
-	}
-	
-	let text = Text::new_color([1.0, 1.0, 1.0, 1.0], 16);
-	
-	
-	window.draw_2d(&event, |context, graphics, _device| {
-            clear([0.0; 4], graphics);
-
-	    let time_ratio_text = format!("time_ratio: {:.10}", time_ratio);
-	    text.draw(&time_ratio_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 20.0), graphics).expect("Failed to render time_ratio_text");
-
-	    let zoom = format!("zoom: {:.10}", cam.zoom);
-	    text.draw(&zoom, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 40.0), graphics).expect("Failed to render zoom");
-
-	    let cam_pos = format!("cam pos: ({}, {})", cam.pos.x, cam.pos.y);
-	    text.draw(&cam_pos, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 60.0), graphics).expect("Failed to render cam_pos");
-
-	    let number_of_objects_text = format!("number of objects: {})", universe.objects.len());
-	    text.draw(&number_of_objects_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 80.0), graphics).expect("Failed to render number_of_objects_text");
-
-	    let bounding_text = format!("bounding: {}", keep_camera_zoomed_to_universe_bounding_box);
-	    text.draw(&bounding_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 100.0), graphics).expect("Failed to render bounding_text");
-
-	    let following_text = format!("following: {}", cam_following);
-	    text.draw(&following_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 120.0), graphics).expect("Failed to render following_text");
-
-	    let v = universe.objects[object_followed].velocity;
-	    
-	    let followed_object_velocity_text = format!("followed object velocity: ({:.10}, {:.10})", v.x, v.y);
-	    text.draw(&followed_object_velocity_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 140.0), graphics).expect("Failed to render followed_object_velocity_text");
-	    
-	    let a = universe.objects[object_followed].acceleration;
-
-	    let followed_object_acceleration_text = format!("followed object acceleration: ({:.10}, {:.10})", a.x, a.y);
-	    text.draw(&followed_object_acceleration_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 160.0), graphics).expect("Failed to render followed_object_acceleration_text");
-
-	    let (min, max) = universe.bounding_box();
-	    let universe_bounding_box_text = format!("univers bounding box: (({:.10}, {:.10}), {:.10}, {:.10})", min.x, min.y, max.x, max.y);
-	    text.draw(&universe_bounding_box_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 180.0), graphics).expect("Failed to render universe_bounding_box_text");
-
-
-
-	    glyphs.factory.encoder.flush(_device);
-
-	    for object in universe.objects.iter() {
-		let pos = Vector2::new(object.pos[0], object.pos[1]);
-		let half_vector = Vector2::new(half_width, half_height);
-		let pos_relative_to_camera = pos - cam.pos;
-
-		let zoomed_position = pos_relative_to_camera * cam.zoom;
-		let centered_position = zoomed_position + half_vector;
-		let final_pos = centered_position;
-		
-		let ellipse_geometry = graphics::ellipse::circle(final_pos.x,
-								 final_pos.y,
-								 (object.radius * cam.zoom).max(1.0));
-
-		use std::cmp::Ordering;
-		let min_mass = universe.objects.iter().min_by(|a, b| if a.mass < b.mass { Ordering::Less } else { Ordering::Greater} ).unwrap().mass;
-		let max_mass = universe.objects.iter().max_by(|a, b| if a.mass < b.mass { Ordering::Less } else { Ordering::Greater}).unwrap().mass;
-		
-		let mut color = [0.0, 0.5, 0.0, 1.0];
-		color[0] = ((object.mass - min_mass) / (max_mass - min_mass)).tanh() as f32;
-		ellipse(color,
-			ellipse_geometry,
-			context.transform,
-			graphics);
+			*note *= 1.01;
+			*note = 20_000_f32.min(*note)
+		    },
+		    Key::J => { *target_note.lock().unwrap() /= 1.01; },
+		    _ => (),
+		}
 	    }
-	});
+	    
+
+	    let time_ratio = universe.time_ratio; // Okay technically time_ratio could have been updated in the keyboard match, and that would be wrong to use it as the time_ratio for the current frame. But the universe update and keyboard events should be separated anyway.
+
+	    universe = universe.apply_elapsed_time(elapsed_time * time_ratio);
+	    universe = universe.apply_gravity();
+
+
+	    if keep_camera_zoomed_to_universe_bounding_box {
+		let (min, max) = universe.bounding_box();
+		
+		cam.zoom_to_bounding_box(size, min, max);
+	    }
+
+	    if cam_following {
+		object_followed = rng.gen_range(0..universe.objects.len());
+		let object = &universe.objects[object_followed];
+		cam.pos = object.pos;
+
+	
+		
+	    }
+
+	    for (i, object) in universe.objects.iter().enumerate() {
+		let (min, max) = universe.bounding_box();
+		let relative_pos = object.pos - min;
+		let universe = max - min;
+
+		let pos = Vec2::new(
+		    relative_pos.x / universe.x,
+		    relative_pos.y / universe.y * 20_00_f64,
+		);
+
+//		println!("({}, {})", pos.x, pos.y);
+		(*notes.lock().unwrap())[i] = (pos.x as f32, pos.y as f32);
+	    }
+	    
+	    let text = Text::new_color([1.0, 1.0, 1.0, 1.0], 16);
+	    
+	    
+	    window.draw_2d(&event, |context, graphics, _device| {
+		clear([0.0; 4], graphics);
+
+		let time_ratio_text = format!("time_ratio: {:.10}", time_ratio);
+		text.draw(&time_ratio_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 20.0), graphics).expect("Failed to render time_ratio_text");
+
+		let zoom = format!("zoom: {:.10}", cam.zoom);
+		text.draw(&zoom, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 40.0), graphics).expect("Failed to render zoom");
+
+		let cam_pos = format!("cam pos: ({}, {})", cam.pos.x, cam.pos.y);
+		text.draw(&cam_pos, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 60.0), graphics).expect("Failed to render cam_pos");
+
+		let number_of_objects_text = format!("number of objects: {})", universe.objects.len());
+		text.draw(&number_of_objects_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 80.0), graphics).expect("Failed to render number_of_objects_text");
+
+		let bounding_text = format!("bounding: {}", keep_camera_zoomed_to_universe_bounding_box);
+		text.draw(&bounding_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 100.0), graphics).expect("Failed to render bounding_text");
+
+		let following_text = format!("following: {}", cam_following);
+		text.draw(&following_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 120.0), graphics).expect("Failed to render following_text");
+
+		let v = universe.objects[object_followed].velocity;
+		
+		let followed_object_velocity_text = format!("followed object velocity: ({:.10}, {:.10})", v.x, v.y);
+		text.draw(&followed_object_velocity_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 140.0), graphics).expect("Failed to render followed_object_velocity_text");
+		
+		let a = universe.objects[object_followed].acceleration;
+
+		let followed_object_acceleration_text = format!("followed object acceleration: ({:.10}, {:.10})", a.x, a.y);
+		text.draw(&followed_object_acceleration_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 160.0), graphics).expect("Failed to render followed_object_acceleration_text");
+
+		let (min, max) = universe.bounding_box();
+		let universe_bounding_box_text = format!("univers bounding box: (({:.10}, {:.10}), {:.10}, {:.10})", min.x, min.y, max.x, max.y);
+		text.draw(&universe_bounding_box_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 180.0), graphics).expect("Failed to render universe_bounding_box_text");
+
+		let sound = format!("sound: {}", *target_note.lock().unwrap());
+		text.draw(&sound, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 200.0), graphics).expect("Failed to render sound");
+
+
+
+		glyphs.factory.encoder.flush(_device);
+
+		for object in universe.objects.iter() {
+		    let pos = Vector2::new(object.pos[0], object.pos[1]);
+		    let half_vector = Vector2::new(half_width, half_height);
+		    let pos_relative_to_camera = pos - cam.pos;
+
+		    let zoomed_position = pos_relative_to_camera * cam.zoom;
+		    let centered_position = zoomed_position + half_vector;
+		    let final_pos = centered_position;
+		    
+		    let ellipse_geometry = graphics::ellipse::circle(final_pos.x,
+								     final_pos.y,
+								     (object.radius * cam.zoom).max(1.0));
+
+		    use std::cmp::Ordering;
+		    let min_mass = universe.objects.iter().min_by(|a, b| if a.mass < b.mass { Ordering::Less } else { Ordering::Greater} ).unwrap().mass;
+		    let max_mass = universe.objects.iter().max_by(|a, b| if a.mass < b.mass { Ordering::Less } else { Ordering::Greater}).unwrap().mass;
+		    
+		    let mut color = [0.0, 0.5, 0.0, 1.0];
+		    color[0] = ((object.mass - min_mass) / (max_mass - min_mass)).tanh() as f32;
+		    ellipse(color,
+			    ellipse_geometry,
+			    context.transform,
+			    graphics);
+		}
+	    });
+	}
     }
 
 }

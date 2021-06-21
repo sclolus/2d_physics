@@ -12,7 +12,13 @@ piston = "0.53.0"
 rand = "*"
 cgmath = "*"
 find_folder = "*"
+cpal = "*"
+lazy_static = "*"
 
 [dependencies.piston2d-graphics]
 version = "0.40.0"
 features = ["glyph_cache_rusttype"]
+
+[depedencies.cpal]
+version = "*"
+features = ["asio"]
