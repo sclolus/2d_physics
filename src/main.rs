@@ -93,6 +93,9 @@ fn main() {
 	}
 
 	pub fn zoom_to_bounding_box(&mut self, size: piston_window::Size, min: Vec2, max: Vec2) {
+	    let original_movement_speed = self.movement_speed;
+	    self.movement_speed = ZOOM_SMOOTHNESS;
+		
 	    let mut width = size.width / self.zoom;
 	    let mut height = size.height / self.zoom;
 
@@ -108,8 +111,7 @@ fn main() {
 	    const ZOOM_SMOOTHNESS: f64 = 1.0001;
 
 	    while !box_contains(camera_box, box_to_bound) {
-		//		self.dezoom();
-		self.zoom /= ZOOM_SMOOTHNESS;
+		self.dezoom();
 
 		width = size.width / self.zoom;  
 		height = size.height / self.zoom;
@@ -123,8 +125,7 @@ fn main() {
 	    }
 	    
 	    while box_contains(camera_box, box_to_bound) {
-		//self.zoom();
-		self.zoom *= ZOOM_SMOOTHNESS;
+		self.zoom();
 
 		width = size.width / self.zoom;  
 		height = size.height / self.zoom;
@@ -137,8 +138,8 @@ fn main() {
 			      Vector2::new(self.pos.x + half_width, self.pos.y + half_height));
 	    }
 
-	    //	    self.dezoom(); // This dance of zooming-dezooming seemed like the simpliest way to find the (almost-)minimum bouding camera box
-	    self.zoom /= ZOOM_SMOOTHNESS;
+	    self.dezoom(); // This dance of zooming-dezooming seemed like the simpliest way to find the (almost-)minimum bouding camera box
+	    self.movement_speed = original_movement_speed;
 	}
     }
 
