@@ -13,15 +13,24 @@ pub struct Universe {
 impl Universe {    
     fn populate(&mut self, number_of_particles: u64) {
 	let mut objects = Vec::new();
-	let half_width = self.window_size.width as f64 * 100.0;
-	let half_height = self.window_size.height as f64 * 100.0;
+
+	let universe_range_multiplier = 2e10;
+	let half_width = self.window_size.width as f64 * universe_range_multiplier;
+	let half_height = self.window_size.height as f64 * universe_range_multiplier;
+	let mass_range = 1e15..1e42;
+
+	let radius_multiplier = 1_000_000.0;
+	let radius_range = 1.0 * radius_multiplier..5.0 * radius_multiplier;
+	let velocity_range = [0.0..0.0, 0.0..0.0];
+	let acceleration_range = [0.0..0.0, 0.0..0.0];
+	
 	
 	for _ in 0..number_of_particles {
-	    objects.push(Object::random_object(100.0..500.0,
-					       1e15..1e20,
+	    objects.push(Object::random_object(radius_range.clone(),
+					       mass_range.clone(),
 					       [-half_width..half_width, -half_height..half_height],
-					       [0.0..30.0, 0.0..30.0],
-					       [0.0..30.0, 0.0..30.0]))
+					       velocity_range.clone(),
+					       acceleration_range.clone()))
 	}
 
 	self.objects = objects;

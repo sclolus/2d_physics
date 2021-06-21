@@ -23,13 +23,12 @@ use std::time::{Instant, Duration};
 
 
 fn main() {
-    println!("Hello, world!");
     let mut window: PistonWindow =
         WindowSettings::new("Hello Piston!", [640, 480])
         .exit_on_esc(true).build().unwrap();
     let size = window.size();
 
-    let object_number = 10;
+    let object_number = 300;
     let mut rng = rand::thread_rng();    
     let mut universe = Universe::new(window.size(), object_number);
 
@@ -253,6 +252,10 @@ fn main() {
 	    let followed_object_acceleration_text = format!("followed object acceleration: ({:.10}, {:.10})", a.x, a.y);
 	    text.draw(&followed_object_acceleration_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 160.0), graphics);
 
+	    let (min, max) = universe.bounding_box();
+	    let universe_bounding_box_text = format!("univers bounding box: (({:.10}, {:.10}), {:.10}, {:.10})", min.x, min.y, max.x, max.y);
+	    text.draw(&universe_bounding_box_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 180.0), graphics);
+
 
 
 	    glyphs.factory.encoder.flush(_device);
@@ -269,8 +272,14 @@ fn main() {
 		let ellipse_geometry = graphics::ellipse::circle(final_pos.x,
 								 final_pos.y,
 								 (object.radius * cam.zoom).max(1.0));
+
+		use std::cmp::Ordering;
+		let min_mass = universe.objects.iter().min_by(|a, b| if a.mass < b.mass { Ordering::Less } else { Ordering::Greater} ).unwrap().mass;
+		let max_mass = universe.objects.iter().max_by(|a, b| if a.mass < b.mass { Ordering::Less } else { Ordering::Greater}).unwrap().mass;
 		
-		ellipse(object.rectangle().color,
+		let mut color = [0.0, 0.5, 0.0, 1.0];
+		color[0] = ((object.mass - min_mass) / (max_mass - min_mass)).tanh() as f32;
+		ellipse(color,
 			ellipse_geometry,
 			context.transform,
 			graphics);
