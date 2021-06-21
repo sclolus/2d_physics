@@ -1,5 +1,5 @@
 [package]
-name = "twoD_physics"
+name = "physics"
 version = "0.1.0"
 authors = ["sclolus"]
 edition = "2018"

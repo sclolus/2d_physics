@@ -1095,6 +1095,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
 
 [[package]]
+name = "physics"
+version = "0.1.0"
+dependencies = [
+ "cgmath",
+ "find_folder",
+ "piston",
+ "piston2d-graphics",
+ "piston_window",
+ "rand",
+]
+
+[[package]]
 name = "piston"
 version = "0.53.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1557,18 +1569,6 @@ name = "ttf-parser"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3e5d7cd7ab3e47dda6e56542f4bbf3824c15234958c6e1bd6aaa347e93499fdc"
-
-[[package]]
-name = "twoD_physics"
-version = "0.1.0"
-dependencies = [
- "cgmath",
- "find_folder",
- "piston",
- "piston2d-graphics",
- "piston_window",
- "rand",
-]
 
 [[package]]
 name = "unicode-xid"

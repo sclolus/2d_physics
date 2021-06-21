@@ -1,11 +1,5 @@
-use graphics::math::Vec2d;
-use graphics::types::{Color};
-use graphics::rectangle::Rectangle;
-use graphics::color;
-use graphics::types;
 use std::ops::Range;
 use rand::Rng;
-use graphics::math;
 use cgmath::prelude::*;
 use cgmath::Vector2;
 use crate::universe;
@@ -24,6 +18,7 @@ pub struct Object {
 }
 
 impl Object {
+    #[allow(dead_code)]
     pub fn new() -> Self {
 	Object {
 	    radius: 10.0,
@@ -38,8 +33,8 @@ impl Object {
     pub fn random_object(radius: Range<f64>,
 			 mass: Range<f64>,
 			 position: [Range<f64>; 2],
-			 velocity: [Range<f64>; 2],
-			 acceleration: [Range<f64>; 2]) -> Self {
+			 _velocity: [Range<f64>; 2],
+			 _acceleration: [Range<f64>; 2]) -> Self {
 	let mut rng = rand::thread_rng();
 	
 	Object {
@@ -64,18 +59,6 @@ impl Object {
 	}
     }
     
-    pub fn rectangle(&self) -> Rectangle {
-	Rectangle::new(color::GREEN)
-    }
-
-    pub fn position_rectangle(&self) -> types::Rectangle {
-	[
-	    self.pos[0] - self.radius,
-	    self.pos[1] - self.radius,
-	    self.radius,
-	    self.radius
-	]
-    }
 
     pub fn reset_forces(&mut self) -> &mut Self {
 	self.force = Vec2::new(0.0, 0.0);

@@ -14,12 +14,10 @@ mod universe;
 mod object;
 
 use universe::Universe;
-use object::Object;
 
-use cgmath::prelude::*;
 use rand::Rng;
 
-use std::time::{Instant, Duration};
+use std::time::Instant;
 
 
 fn main() {
@@ -42,24 +40,20 @@ fn main() {
 
     impl Camera {
 	const ZOOM_SPEED: f64 = 1.05;
-	fn initial_camera_pos(size: piston_window::Size) -> Vector2<f64> {
-	    // let half_width = size.width as f64;
-	    // let half_height = size.height as f64;
-
-	    // Vector2::new(-half_width, -half_height)
+	fn initial_camera_pos() -> Vector2<f64> {
 	    Vector2::new(0.0, 0.0)
 	}
 	
-	pub fn new(size: piston_window::Size) -> Self {
+	pub fn new() -> Self {
 	    Camera {
 		zoom: 1.0,
-		pos: Self::initial_camera_pos(size),
+		pos: Self::initial_camera_pos(),
 		movement_speed: 10.0,
 	    }
 	}
 
-	pub fn reset_pos(&mut self, size: piston_window::Size) {
-	    self.pos = Self::initial_camera_pos(size);
+	pub fn reset_pos(&mut self) {
+	    self.pos = Self::initial_camera_pos();
 	}
 
 	pub fn zoom(&mut self) -> &mut Self {
@@ -145,7 +139,7 @@ fn main() {
 
     use std::collections::BTreeSet;
     
-    let mut cam = Camera::new(size);
+    let mut cam = Camera::new();
     let mut keys_pressed: BTreeSet<Key> = BTreeSet::new();
 
     let half_width = size.width as f64 / 2.0;
@@ -185,7 +179,7 @@ fn main() {
 
 	for key in keys_pressed.clone().iter() {
 	    match key {
-		Key::R => { universe = universe.reset(); cam.reset_pos(size); keys_pressed.remove(&Key::R); },
+		Key::R => { universe = universe.reset(); cam.reset_pos(); keys_pressed.remove(&Key::R); },
 		Key::Left => { universe.slow_down(); },
 		Key::Right => { universe.speed_up(); },
 		Key::Down => { cam.dezoom(); },
@@ -217,8 +211,6 @@ fn main() {
 	    cam.pos = universe.objects[object_followed].pos;
 	}
 	
-	use graphics::text;
-
 	let text = Text::new_color([1.0, 1.0, 1.0, 1.0], 16);
 	
 	
@@ -226,36 +218,36 @@ fn main() {
             clear([0.0; 4], graphics);
 
 	    let time_ratio_text = format!("time_ratio: {:.10}", time_ratio);
-	    text.draw(&time_ratio_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 20.0), graphics);
+	    text.draw(&time_ratio_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 20.0), graphics).expect("Failed to render time_ratio_text");
 
 	    let zoom = format!("zoom: {:.10}", cam.zoom);
-	    text.draw(&zoom, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 40.0), graphics);
+	    text.draw(&zoom, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 40.0), graphics).expect("Failed to render zoom");
 
 	    let cam_pos = format!("cam pos: ({}, {})", cam.pos.x, cam.pos.y);
-	    text.draw(&cam_pos, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 60.0), graphics);
+	    text.draw(&cam_pos, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 60.0), graphics).expect("Failed to render cam_pos");
 
 	    let number_of_objects_text = format!("number of objects: {})", universe.objects.len());
-	    text.draw(&number_of_objects_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 80.0), graphics);
+	    text.draw(&number_of_objects_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 80.0), graphics).expect("Failed to render number_of_objects_text");
 
 	    let bounding_text = format!("bounding: {}", keep_camera_zoomed_to_universe_bounding_box);
-	    text.draw(&bounding_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 100.0), graphics);
+	    text.draw(&bounding_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 100.0), graphics).expect("Failed to render bounding_text");
 
 	    let following_text = format!("following: {}", cam_following);
-	    text.draw(&following_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 120.0), graphics);
+	    text.draw(&following_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 120.0), graphics).expect("Failed to render following_text");
 
 	    let v = universe.objects[object_followed].velocity;
 	    
 	    let followed_object_velocity_text = format!("followed object velocity: ({:.10}, {:.10})", v.x, v.y);
-	    text.draw(&followed_object_velocity_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 140.0), graphics);
+	    text.draw(&followed_object_velocity_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 140.0), graphics).expect("Failed to render followed_object_velocity_text");
 	    
 	    let a = universe.objects[object_followed].acceleration;
 
 	    let followed_object_acceleration_text = format!("followed object acceleration: ({:.10}, {:.10})", a.x, a.y);
-	    text.draw(&followed_object_acceleration_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 160.0), graphics);
+	    text.draw(&followed_object_acceleration_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 160.0), graphics).expect("Failed to render followed_object_acceleration_text");
 
 	    let (min, max) = universe.bounding_box();
 	    let universe_bounding_box_text = format!("univers bounding box: (({:.10}, {:.10}), {:.10}, {:.10})", min.x, min.y, max.x, max.y);
-	    text.draw(&universe_bounding_box_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 180.0), graphics);
+	    text.draw(&universe_bounding_box_text, &mut glyphs, &DrawState::default(), context.transform.trans(10.0, 180.0), graphics).expect("Failed to render universe_bounding_box_text");
 
 
 
