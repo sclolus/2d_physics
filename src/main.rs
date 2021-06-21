@@ -36,7 +36,8 @@ fn main() {
 	pub zoom: f64,
 	pub pos: Vector2<f64>,
 	pub movement_speed: f64,
-	pub zoom_speed: f64
+	pub zoom_speed: f64,
+	pub size: piston_window::Size,
     }
 
     impl Camera {
@@ -45,12 +46,13 @@ fn main() {
 	    Vector2::new(0.0, 0.0)
 	}
 	
-	pub fn new() -> Self {
+	pub fn new(size: piston_window::Size) -> Self {
 	    Camera {
 		zoom: 1.0,
 		pos: Self::initial_camera_pos(),
-		movement_speed: 10.0,
+		movement_speed: 1.0,
 		zoom_speed: Self::ZOOM_SPEED,
+		size: size
 	    }
 	}
 
@@ -69,22 +71,34 @@ fn main() {
 	}
 
 	pub fn move_up(&mut self) -> &mut Self {
-	    self.pos -= Vector2::new(0.0, self.movement_speed) * self.zoom.exp();
+	    let height = self.size.height / self.zoom;
+	    let speed = self.movement_speed * height / 100.0;
+	    
+	    self.pos -= Vector2::new(0.0, speed) / self.zoom.exp();
 	    self
 	}
 	
 	pub fn move_down(&mut self) -> &mut Self {
-	    self.pos += Vector2::new(0.0, self.movement_speed) * self.zoom.exp();
+	    let height = self.size.height / self.zoom;
+	    let speed = self.movement_speed * height / 100.0;
+	    
+	    self.pos += Vector2::new(0.0, speed) / self.zoom.exp();
 	    self
 	}
 
 	pub fn move_left(&mut self) -> &mut Self {
-	    self.pos -= Vector2::new(self.movement_speed, 0.0) * self.zoom.exp();
+	    let width = self.size.width / self.zoom;
+	    let speed = self.movement_speed * width / 100.0;
+	    
+	    self.pos -= Vector2::new(speed, 0.0) / self.zoom.exp();
 	    self
 	}
 
 	pub fn move_right(&mut self) -> &mut Self {
-	    self.pos += Vector2::new(self.movement_speed, 0.0) * self.zoom.exp();
+	    let width = self.size.width / self.zoom;
+	    let speed = self.movement_speed * width / 100.0;
+
+	    self.pos += Vector2::new(speed, 0.0) / self.zoom.exp();
 	    self
 	}
 
@@ -141,7 +155,7 @@ fn main() {
 
     use std::collections::BTreeSet;
     
-    let mut cam = Camera::new();
+    let mut cam = Camera::new(size);
     let mut keys_pressed: BTreeSet<Key> = BTreeSet::new();
 
     let half_width = size.width as f64 / 2.0;
