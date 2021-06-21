@@ -36,6 +36,7 @@ fn main() {
 	pub zoom: f64,
 	pub pos: Vector2<f64>,
 	pub movement_speed: f64,
+	pub zoom_speed: f64
     }
 
     impl Camera {
@@ -49,6 +50,7 @@ fn main() {
 		zoom: 1.0,
 		pos: Self::initial_camera_pos(),
 		movement_speed: 10.0,
+		zoom_speed: Self::ZOOM_SPEED,
 	    }
 	}
 
@@ -57,12 +59,12 @@ fn main() {
 	}
 
 	pub fn zoom(&mut self) -> &mut Self {
-	    self.zoom *= Self::ZOOM_SPEED;
+	    self.zoom *= self.zoom_speed;
 	    self
 	}
 
 	pub fn dezoom(&mut self) -> &mut Self {
-	    self.zoom /= Self::ZOOM_SPEED;
+	    self.zoom /= self.zoom_speed;
 	    self
 	}
 
@@ -87,8 +89,7 @@ fn main() {
 	}
 
 	pub fn zoom_to_bounding_box(&mut self, size: piston_window::Size, min: Vec2, max: Vec2) {
-	    let original_movement_speed = self.movement_speed;
-	    self.movement_speed = ZOOM_SMOOTHNESS;
+	    let original_zoom_speed = self.zoom_speed;
 		
 	    let mut width = size.width / self.zoom;
 	    let mut height = size.height / self.zoom;
@@ -103,6 +104,7 @@ fn main() {
 								    && a.1.x > b.1.x && a.1.y > b.1.y};
 
 	    const ZOOM_SMOOTHNESS: f64 = 1.0001;
+	    self.zoom_speed = ZOOM_SMOOTHNESS;
 
 	    while !box_contains(camera_box, box_to_bound) {
 		self.dezoom();
@@ -133,7 +135,7 @@ fn main() {
 	    }
 
 	    self.dezoom(); // This dance of zooming-dezooming seemed like the simpliest way to find the (almost-)minimum bouding camera box
-	    self.movement_speed = original_movement_speed;
+	    self.zoom_speed = original_zoom_speed;
 	}
     }
 
